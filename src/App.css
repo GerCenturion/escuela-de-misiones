@@ -1,0 +1,72 @@
+/* --- Configuración global --- */
+html, body {
+  height: 100%; /* Asegura que ocupen toda la altura de la ventana */
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* --- Contenedor principal con Grid --- */
+.app {
+  display: grid;
+  min-height: 100vh; /* Asegura que ocupe toda la altura de la ventana */
+  grid-template-rows: auto 1fr auto; /* Header, contenido (main), footer */
+}
+
+/* --- Header (Navegación) --- */
+.navbar {
+  background-color: #212529; /* Fondo negro */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar-nav .nav-link {
+  color: #f8f9fa; /* Texto blanco */
+  transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #ffc107; /* Amarillo Bootstrap */
+}
+
+/* --- Contenido Principal --- */
+main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* --- Footer --- */
+footer {
+  background-color: #212529; /* Fondo negro */
+  color: #f8f9fa; /* Texto blanco */
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem; /* Texto compacto */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera superior */
+  margin-top: auto; /* Empuja el footer al final */
+}
+
+/* --- Responsividad --- */
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+  }
+
+  .navbar-brand {
+    font-size: 1.3rem;
+  }
+
+  footer {
+    padding: 0.5rem;
+  }
+}
