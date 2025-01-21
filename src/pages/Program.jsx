@@ -7,7 +7,7 @@ const Program = () => {
       <div className="row">
         {/* Nivel Elemental */}
         <div className="col-md-6 col-lg-3 mb-4">
-          <h3 className="text-primary text-uppercase">Elemental</h3>
+          <h3 className="text-uppercase">Elemental</h3>
           <ul className="list-group">
             <li className="list-group-item">
               Evangelización y Crecimiento “A”
@@ -33,7 +33,7 @@ const Program = () => {
 
         {/* Avanzado 1 */}
         <div className="col-md-6 col-lg-3 mb-4">
-          <h3 className="text-primary text-uppercase">Avanzado 1</h3>
+          <h3 className="text-uppercase">Avanzado 1</h3>
           <ul className="list-group">
             <li className="list-group-item">Análisis Pentateuco “A”</li>
             <li className="list-group-item">Análisis Pentateuco “B”</li>
@@ -55,7 +55,7 @@ const Program = () => {
 
         {/* Avanzado 2 */}
         <div className="col-md-6 col-lg-3 mb-4">
-          <h3 className="text-primary text-uppercase">Avanzado 2</h3>
+          <h3 className="text-uppercase">Avanzado 2</h3>
           <ul className="list-group">
             <li className="list-group-item">Análisis Apocalipsis “A”</li>
             <li className="list-group-item">Análisis Apocalipsis “B”</li>
@@ -73,7 +73,12 @@ const Program = () => {
 
         {/* Avanzado 3 */}
         <div className="col-md-6 col-lg-3 mb-4">
-          <h3 className="text-primary text-uppercase">Avanzado 3</h3>
+          <h3
+            className="
+          text-uppercase"
+          >
+            Avanzado 3
+          </h3>
           <ul className="list-group">
             <li className="list-group-item">Homilética “A”</li>
             <li className="list-group-item">Homilética “B”</li>
