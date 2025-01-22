@@ -7,12 +7,17 @@ const Header = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
-        {/* Logo */}
+        {/* Logo con imagen */}
         <Link
-          className="navbar-brand fw-bold"
+          className="navbar-brand d-flex align-items-center"
           to="/"
         >
-          Escuela de Misiones
+          <img
+            src="/logo.png"
+            alt="Escuela de Misiones"
+            style={{ height: "40px", marginRight: "10px" }}
+          />
+          <span className="fw-bold">Escuela de Misiones</span>
         </Link>
 
         {/* Botón Hamburguesa */}
