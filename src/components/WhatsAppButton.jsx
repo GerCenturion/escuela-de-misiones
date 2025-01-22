@@ -1,4 +1,6 @@
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faWhatsapp } from "@fortawesome/free-brands-svg-icons"; // Ícono de WhatsApp
 
 const WhatsAppButton = () => {
   const phoneNumber = "5493874205520"; // Número de WhatsApp
@@ -16,21 +18,22 @@ const WhatsAppButton = () => {
         right: "20px",
         backgroundColor: "#25D366",
         color: "#fff",
-        padding: "15px",
+        width: "60px",
+        height: "60px",
         borderRadius: "50%",
-        textAlign: "center",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
-        zIndex: 1000,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
+        zIndex: 1000,
       }}
     >
-      {/* Usando ícono de WhatsApp desde Font Awesome */}
-      <i
-        className="fab fa-whatsapp"
-        style={{ fontSize: "24px", color: "white" }}
-      ></i>
+      {/* Usando el ícono de FontAwesome */}
+      <FontAwesomeIcon
+        icon={faWhatsapp}
+        size="2x"
+        style={{ color: "white" }}
+      />
     </a>
   );
 };
