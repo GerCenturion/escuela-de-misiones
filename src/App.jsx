@@ -7,7 +7,7 @@ import About from "./pages/About";
 import Program from "./pages/Program";
 import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
-import WhatsAppButton from "./components/WhatsAppButton"; // Importación del botón
+import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
   return (
@@ -39,7 +39,7 @@ const App = () => {
           </Routes>
         </main>
         <Footer />
-        <WhatsAppButton /> {/* Botón flotante de WhatsApp */}
+        <WhatsAppButton />
       </div>
     </Router>
   );
