@@ -33,7 +33,7 @@ const Registration = () => {
     return regex.test(password);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validatePassword(formData.password)) {
@@ -48,29 +48,46 @@ const Registration = () => {
       return;
     }
 
-    setError(""); // Limpia errores si todo está correcto
-    alert("¡Registro enviado exitosamente!");
-    console.log("Datos enviados:", formData);
+    try {
+      const response = await fetch("http://localhost:5000/api/inscripciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    // Limpia los campos del formulario
-    setFormData({
-      name: "",
-      email: "",
-      phoneCode: "",
-      phoneArea: "",
-      phoneNumber: "",
-      phoneType: "",
-      birthdate: "",
-      dni: "",
-      address: "",
-      civilStatus: "",
-      profession: "",
-      church: "",
-      ministerialRole: "",
-      reason: "",
-      password: "",
-      confirmPassword: "",
-    });
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      alert(data.message);
+      console.log("Datos enviados correctamente:", data);
+
+      // Limpia el formulario después de enviarlo
+      setFormData({
+        name: "",
+        email: "",
+        phoneCode: "",
+        phoneArea: "",
+        phoneNumber: "",
+        phoneType: "",
+        birthdate: "",
+        dni: "",
+        address: "",
+        civilStatus: "",
+        profession: "",
+        church: "",
+        ministerialRole: "",
+        reason: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      setError(""); // Limpia cualquier mensaje de error previo
+    } catch (error) {
+      console.error("Error al enviar datos:", error);
+      setError("Hubo un problema al enviar la inscripción.");
+    }
   };
 
   return (
@@ -85,6 +102,18 @@ const Registration = () => {
             className="form-control"
             name="name"
             value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        {/* Email */}
+        <div className="mb-3">
+          <label className="form-label">Correo Electrónico:</label>
+          <input
+            type="email"
+            className="form-control"
+            name="email"
+            value={formData.email}
             onChange={handleChange}
             required
           />
@@ -258,7 +287,7 @@ const Registration = () => {
             value={formData.password}
             onChange={handleChange}
             required
-          />{" "}
+          />
           <small className="text-muted">
             La contraseña debe tener al menos 6 caracteres, una letra mayúscula
             y un número.
@@ -270,7 +299,7 @@ const Registration = () => {
           >
             {showPasswords ? "🙈" : "👁️"}
           </span>
-        </div>{" "}
+        </div>
         <div className="mb-3 position-relative">
           <label className="form-label">Confirmar Contraseña:</label>
           <input
