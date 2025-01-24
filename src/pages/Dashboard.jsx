@@ -1,8 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("home");
+  const [userData, setUserData] = useState(null); // Estado para guardar los datos del usuario
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Por favor, inicia sesión para acceder al dashboard.");
+        window.location.href = "/login";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/usuarios/me", {
+          method: "GET",
+          headers: {
+            Authorization: token, // Enviar el token en el encabezado
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos del usuario");
+        }
+
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error al cargar los datos del usuario:", error);
+        alert(
+          "Hubo un problema al cargar los datos. Por favor, inicia sesión nuevamente."
+        );
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -46,7 +84,10 @@ const Dashboard = () => {
       <main className="main-content">
         {activeSection === "home" && (
           <section>
-            <h1>Bienvenido al Campus Virtual</h1>
+            <h1>
+              Bienvenido {userData ? userData.name : "Cargando..."} al Campus
+              Virtual
+            </h1>
             <p>
               Aquí puedes acceder a tus materiales, revisar tu perfil y
               mantenerte al día con la información del seminario.
@@ -81,13 +122,16 @@ const Dashboard = () => {
         {activeSection === "profile" && (
           <section>
             <h1>Mi Perfil</h1>
-            <p>Aquí puedes actualizar tu información personal.</p>
-            <ul>
-              <li>Nombre: Gerson Centurión</li>
-              <li>Email: gercenturion@example.com</li>
-              <li>DNI: 37468369</li>
-              {/* Puedes agregar más datos según la estructura */}
-            </ul>
+            {userData ? (
+              <ul>
+                <li>Nombre: {userData.name}</li>
+                <li>Email: {userData.email}</li>
+                <li>DNI: {userData.dni}</li>
+                {/* Agregar más datos si es necesario */}
+              </ul>
+            ) : (
+              <p>Cargando información del perfil...</p>
+            )}
           </section>
         )}
       </main>

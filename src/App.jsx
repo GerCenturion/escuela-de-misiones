@@ -9,6 +9,7 @@ import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import PrivateRoute from "./components/PrivateRoute";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -36,7 +37,11 @@ const App = () => {
             />
             <Route
               path="/dashboard"
-              element={<Dashboard />}
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
             />
             <Route
               path="/contact"
