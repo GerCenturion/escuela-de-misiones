@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Importa useNavigate
 
 const Login = () => {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate(); // Hook para redirigir
 
   // URL de la API desde el archivo .env
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -11,7 +13,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dni, password }),
@@ -22,9 +24,12 @@ const Login = () => {
       }
 
       const data = await response.json();
-      alert(data.message);
-      console.log("Token:", data.token);
+
+      // Guardar token en localStorage
       localStorage.setItem("token", data.token);
+
+      // Redirigir a /dashboard
+      navigate("/dashboard");
     } catch (error) {
       setError("Credenciales inválidas. Intente nuevamente.");
       console.error("Error:", error.message);
