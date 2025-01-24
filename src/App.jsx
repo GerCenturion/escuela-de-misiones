@@ -8,8 +8,11 @@ import Program from "./pages/Program";
 import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
+import EditUser from "./pages/EditUser";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -36,6 +39,16 @@ const App = () => {
               element={<Registration />}
             />
             <Route
+              path="/contact"
+              element={<Contact />}
+            />
+            <Route
+              path="/login"
+              element={<Login />}
+            />
+
+            {/* Ruta protegida para el dashboard de alumno */}
+            <Route
               path="/dashboard"
               element={
                 <PrivateRoute>
@@ -43,13 +56,24 @@ const App = () => {
                 </PrivateRoute>
               }
             />
+
+            {/* Ruta protegida para el dashboard de admin */}
             <Route
-              path="/contact"
-              element={<Contact />}
+              path="/admin-dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
             />
+
             <Route
-              path="/login"
-              element={<Login />}
+              path="/admin/edit/:id"
+              element={
+                <PrivateRoute>
+                  <EditUser />
+                </PrivateRoute>
+              }
             />
           </Routes>
         </main>

@@ -28,8 +28,14 @@ const Login = () => {
       // Guardar token en localStorage
       localStorage.setItem("token", data.token);
 
-      // Redirigir a /dashboard
-      navigate("/dashboard");
+      // Redirigir según el rol del usuario
+      if (data.user.role === "admin") {
+        navigate("/admin-dashboard"); // Redirige al dashboard de admin
+      } else if (data.user.role === "alumno") {
+        navigate("/dashboard"); // Redirige al dashboard de alumno
+      } else {
+        setError("Rol desconocido. Por favor, contacte al administrador.");
+      }
     } catch (error) {
       setError("Credenciales inválidas. Intente nuevamente.");
       console.error("Error:", error.message);
