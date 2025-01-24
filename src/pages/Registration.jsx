@@ -23,6 +23,8 @@ const Registration = () => {
   const [error, setError] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
 
+  const apiUrl = import.meta.env.VITE_API_URL; // Variable de entorno
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -49,7 +51,7 @@ const Registration = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/inscripciones", {
+      const response = await fetch(`${apiUrl}/usuarios`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
