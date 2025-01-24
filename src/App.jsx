@@ -7,6 +7,8 @@ import About from "./pages/About";
 import Program from "./pages/Program";
 import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -33,8 +35,16 @@ const App = () => {
               element={<Registration />}
             />
             <Route
+              path="/dashboard"
+              element={<Dashboard />}
+            />
+            <Route
               path="/contact"
               element={<Contact />}
+            />
+            <Route
+              path="/login"
+              element={<Login />}
             />
           </Routes>
         </main>

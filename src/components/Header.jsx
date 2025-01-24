@@ -83,6 +83,15 @@ const Header = () => {
                 Contacto
               </Link>
             </li>
+            <li className="nav-item">
+              <Link
+                className="nav-link"
+                to="/login"
+                onClick={() => setIsOpen(false)}
+              >
+                Ingresar
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
