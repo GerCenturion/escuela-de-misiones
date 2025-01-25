@@ -14,6 +14,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import EditUser from "./pages/EditUser";
 import EditMateria from "./pages/EditMateria";
+import CreateMateria from "./pages/CreateMateria";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -83,6 +84,10 @@ const App = () => {
                   <EditMateria />
                 </AdminRoute>
               }
+            />
+            <Route
+              path="/admin/materias/create"
+              element={<CreateMateria />}
             />
           </Routes>
         </main>
