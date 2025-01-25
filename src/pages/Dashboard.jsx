@@ -157,7 +157,9 @@ const Dashboard = () => {
                     ? "bg-warning text-dark"
                     : estadoInscripcion === "Aceptado"
                     ? "bg-success"
-                    : "bg-danger"
+                    : estadoInscripcion === "Rechazado"
+                    ? "bg-danger"
+                    : "bg-secondary"
                 }`}
               >
                 {estadoInscripcion}
@@ -165,20 +167,23 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        <button
-          className="btn btn-primary btn-sm"
-          disabled={
-            estadoInscripcion === "Pendiente" ||
-            estadoInscripcion === "Aceptado"
-          }
-          onClick={() => handleInscripcion(materia._id)}
-        >
-          {estadoInscripcion === "Pendiente"
-            ? "Solicitud Enviada"
-            : estadoInscripcion === "Aceptado"
-            ? "Inscripción Aprobada"
-            : "Solicitar Inscripción"}
-        </button>
+        {/* Renderizar el botón solo si el estado no es "Rechazado" */}
+        {estadoInscripcion !== "Rechazado" && (
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={
+              estadoInscripcion === "Pendiente" ||
+              estadoInscripcion === "Aceptado"
+            }
+            onClick={() => handleInscripcion(materia._id)}
+          >
+            {estadoInscripcion === "Pendiente"
+              ? "Solicitud Enviada"
+              : estadoInscripcion === "Aceptado"
+              ? "Inscripción Aprobada"
+              : "Solicitar Inscripción"}
+          </button>
+        )}
       </li>
     );
   };

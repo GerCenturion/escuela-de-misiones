@@ -5,6 +5,7 @@ const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
   const [materia, setMateria] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -33,6 +34,16 @@ const ProfessorMateriaPage = () => {
   }, [id, token]);
 
   const gestionarInscripcion = async (alumnoId, status) => {
+    // Validar si el estado seleccionado ya coincide con el estado actual
+    const currentStatus = materia.students.find(
+      (student) => student.student._id === alumnoId
+    )?.status;
+
+    if (currentStatus === status) {
+      alert("El estado seleccionado ya es el actual.");
+      return;
+    }
+
     const confirmChange = window.confirm(
       `¿Estás seguro de que deseas cambiar el estado a "${status}"?`
     );
@@ -40,6 +51,8 @@ const ProfessorMateriaPage = () => {
     if (!confirmChange) {
       return; // Salir si el usuario cancela
     }
+
+    setLoading(true);
 
     try {
       const response = await fetch(
@@ -71,6 +84,8 @@ const ProfessorMateriaPage = () => {
     } catch (error) {
       setError("Error al gestionar la solicitud");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,18 +137,26 @@ const ProfessorMateriaPage = () => {
               </p>
             </div>
             <div>
-              {/* Selector de estado */}
-              <select
-                className="form-select form-select-sm"
-                value={student.status || ""}
-                onChange={(e) =>
-                  gestionarInscripcion(student.student._id, e.target.value)
-                }
-              >
-                <option value="Pendiente">Pendiente</option>
-                <option value="Aceptado">Aceptado</option>
-                <option value="Rechazado">Rechazado</option>
-              </select>
+              {loading ? (
+                <button
+                  className="btn btn-primary btn-sm"
+                  disabled
+                >
+                  Cargando...
+                </button>
+              ) : (
+                <select
+                  className="form-select form-select-sm"
+                  value={student.status || ""}
+                  onChange={(e) =>
+                    gestionarInscripcion(student.student._id, e.target.value)
+                  }
+                >
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Aceptado">Aceptado</option>
+                  <option value="Rechazado">Rechazado</option>
+                </select>
+              )}
             </div>
           </li>
         ))}
