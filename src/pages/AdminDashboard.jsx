@@ -6,6 +6,7 @@ const AdminDashboard = () => {
   const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
   const [activeSection, setActiveSection] = useState("usuarios");
+  const [isProfessor, setIsProfessor] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -21,7 +22,7 @@ const AdminDashboard = () => {
       try {
         const response = await fetch(`${API_URL}/admin/usuarios`, {
           headers: {
-            Authorization: token,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -41,7 +42,7 @@ const AdminDashboard = () => {
       try {
         const response = await fetch(`${API_URL}/materias`, {
           headers: {
-            Authorization: token,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -51,6 +52,14 @@ const AdminDashboard = () => {
 
         const data = await response.json();
         setMaterias(data);
+
+        // Verificar si el usuario actual tiene materias asignadas
+        const decoded = JSON.parse(atob(token.split(".")[1])); // Decodifica el token
+        const userId = decoded.id;
+        const assignedMaterias = data.filter(
+          (materia) => materia.professor?._id === userId
+        );
+        setIsProfessor(assignedMaterias.length > 0);
       } catch (error) {
         setError("Error al cargar materias");
         console.error(error);
@@ -72,7 +81,7 @@ const AdminDashboard = () => {
       const response = await fetch(`${API_URL}/admin/usuarios/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -124,6 +133,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleGoToProfessorDashboard = () => {
+    navigate("/professor-dashboard");
+  };
+
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Panel de Administración</h1>
@@ -138,13 +151,21 @@ const AdminDashboard = () => {
           Administrar Usuarios
         </button>
         <button
-          className={`btn btn-secondary ${
+          className={`btn btn-secondary me-2 ${
             activeSection === "materias" && "active"
           }`}
           onClick={() => setActiveSection("materias")}
         >
           Administrar Materias
         </button>
+        {isProfessor && (
+          <button
+            className="btn btn-info"
+            onClick={handleGoToProfessorDashboard}
+          >
+            Ir al Dashboard de Profesor
+          </button>
+        )}
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}

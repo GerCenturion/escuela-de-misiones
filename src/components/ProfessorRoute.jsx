@@ -17,16 +17,18 @@ const ProfessorRoute = ({ children }) => {
   try {
     const decoded = jwtDecode(token); // Decodifica el token
 
-    if (decoded.role !== "profesor") {
-      return (
-        <Navigate
-          to="/dashboard"
-          replace
-        />
-      );
+    // Permitir acceso si el usuario es "profesor" o "admin"
+    if (decoded.role === "profesor" || decoded.role === "admin") {
+      return children;
     }
 
-    return children;
+    // Redirige al dashboard general si no tiene el rol necesario
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
   } catch (error) {
     console.error("Error al decodificar el token:", error);
     return (
