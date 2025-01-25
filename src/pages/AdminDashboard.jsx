@@ -98,17 +98,28 @@ const AdminDashboard = () => {
       const response = await fetch(`${API_URL}/materias/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: token,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Asegúrate de usar el prefijo "Bearer"
         },
       });
 
       if (!response.ok) {
-        throw new Error("Error al eliminar materia");
+        if (response.status === 403) {
+          throw new Error("No tienes permisos para eliminar esta materia.");
+        }
+        if (response.status === 404) {
+          throw new Error("Materia no encontrada.");
+        }
+        throw new Error("Error al eliminar la materia.");
       }
 
-      setMaterias(materias.filter((materia) => materia._id !== id));
+      setMaterias((prevMaterias) =>
+        prevMaterias.filter((materia) => materia._id !== id)
+      );
+      setError("");
+      alert("Materia eliminada con éxito.");
     } catch (error) {
-      setError("Error al eliminar materia");
+      setError(error.message);
       console.error(error);
     }
   };
