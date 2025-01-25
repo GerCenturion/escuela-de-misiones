@@ -3,22 +3,20 @@ import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [usuarios, setUsuarios] = useState([]);
+  const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState("usuarios");
   const navigate = useNavigate();
 
-  // URL de la API
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-  // Token almacenado
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     if (!token) {
-      navigate("/login"); // Redirigir si no está autenticado
+      navigate("/login");
       return;
     }
 
-    // Obtener usuarios
     const fetchUsuarios = async () => {
       try {
         const response = await fetch(`${API_URL}/admin/usuarios`, {
@@ -39,17 +37,36 @@ const AdminDashboard = () => {
       }
     };
 
+    const fetchMaterias = async () => {
+      try {
+        const response = await fetch(`${API_URL}/materias`, {
+          headers: {
+            Authorization: token,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al cargar materias");
+        }
+
+        const data = await response.json();
+        setMaterias(data);
+      } catch (error) {
+        setError("Error al cargar materias");
+        console.error(error);
+      }
+    };
+
     fetchUsuarios();
+    fetchMaterias();
   }, [token, navigate]);
 
-  const handleDelete = async (id) => {
+  const handleDeleteUsuario = async (id) => {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que deseas eliminar este usuario?"
     );
 
-    if (!confirmDelete) {
-      return;
-    }
+    if (!confirmDelete) return;
 
     try {
       const response = await fetch(`${API_URL}/admin/usuarios/${id}`, {
@@ -70,45 +87,146 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteMateria = async (id) => {
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de que deseas eliminar esta materia?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/materias/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar materia");
+      }
+
+      setMaterias(materias.filter((materia) => materia._id !== id));
+    } catch (error) {
+      setError("Error al eliminar materia");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Panel de Administración</h1>
 
+      <div className="mb-4">
+        <button
+          className={`btn btn-secondary me-2 ${
+            activeSection === "usuarios" && "active"
+          }`}
+          onClick={() => setActiveSection("usuarios")}
+        >
+          Administrar Usuarios
+        </button>
+        <button
+          className={`btn btn-secondary ${
+            activeSection === "materias" && "active"
+          }`}
+          onClick={() => setActiveSection("materias")}
+        >
+          Administrar Materias
+        </button>
+      </div>
+
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {usuarios.map((usuario) => (
-            <tr key={usuario._id}>
-              <td>{usuario.name}</td>
-              <td>{usuario.email}</td>
-              <td>{usuario.role}</td>
-              <td>
-                <button
-                  className="btn btn-danger btn-sm me-2"
-                  onClick={() => handleDelete(usuario._id)}
-                >
-                  Eliminar
-                </button>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => navigate(`/admin/edit/${usuario._id}`)}
-                >
-                  Editar
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {activeSection === "usuarios" && (
+        <div>
+          <h2>Usuarios</h2>
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario._id}>
+                  <td>{usuario.name}</td>
+                  <td>{usuario.email}</td>
+                  <td>{usuario.role}</td>
+                  <td>
+                    <button
+                      className="btn btn-danger btn-sm me-2"
+                      onClick={() => handleDeleteUsuario(usuario._id)}
+                    >
+                      Eliminar
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => navigate(`/admin/edit/${usuario._id}`)}
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeSection === "materias" && (
+        <div>
+          <h2>Materias</h2>
+          <button
+            className="btn btn-success mb-3"
+            onClick={() => navigate("/admin/materias/create")}
+          >
+            Agregar Materia
+          </button>
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Nivel</th>
+                <th>Profesor</th>
+                <th>Inscripción</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {materias.map((materia) => (
+                <tr key={materia._id}>
+                  <td>{materia.name}</td>
+                  <td>{materia.level}</td>
+                  <td>{materia.professor?.name || "Sin asignar"}</td>
+                  <td>
+                    {materia.isEnrollmentOpen ? "Habilitada" : "Deshabilitada"}
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-danger btn-sm me-2"
+                      onClick={() => handleDeleteMateria(materia._id)}
+                    >
+                      Eliminar
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() =>
+                        navigate(`/admin/materias/edit/${materia._id}`)
+                      }
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

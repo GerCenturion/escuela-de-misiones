@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import EditUser from "./pages/EditUser";
+import EditMateria from "./pages/EditMateria";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -22,6 +23,7 @@ const App = () => {
         <Header />
         <main>
           <Routes>
+            {/* Rutas públicas */}
             <Route
               path="/"
               element={<Home />}
@@ -47,7 +49,7 @@ const App = () => {
               element={<Login />}
             />
 
-            {/* Ruta protegida para el dashboard de alumno */}
+            {/* Rutas protegidas */}
             <Route
               path="/dashboard"
               element={
@@ -57,7 +59,7 @@ const App = () => {
               }
             />
 
-            {/* Ruta protegida para el dashboard de admin */}
+            {/* Rutas protegidas para el administrador */}
             <Route
               path="/admin-dashboard"
               element={
@@ -66,13 +68,20 @@ const App = () => {
                 </AdminRoute>
               }
             />
-
             <Route
               path="/admin/edit/:id"
               element={
-                <PrivateRoute>
+                <AdminRoute>
                   <EditUser />
-                </PrivateRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/materias/edit/:id"
+              element={
+                <AdminRoute>
+                  <EditMateria />
+                </AdminRoute>
               }
             />
           </Routes>
