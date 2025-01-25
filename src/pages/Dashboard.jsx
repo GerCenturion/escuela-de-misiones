@@ -113,6 +113,15 @@ const Dashboard = () => {
 
       const data = await response.json();
       alert(data.message); // Mensaje de éxito
+
+      // Actualizamos el estado para inhabilitar el botón
+      setAvailableMaterias((prevMaterias) =>
+        prevMaterias.map((materia) =>
+          materia._id === materiaId
+            ? { ...materia, inscripcionStatus: "Pendiente" }
+            : materia
+        )
+      );
     } catch (error) {
       console.error("Error al solicitar inscripción:", error.message);
       alert("Error al solicitar inscripción");
@@ -124,24 +133,37 @@ const Dashboard = () => {
 
     useEffect(() => {
       const obtenerEstado = async () => {
-        const estado = await verificarEstadoInscripcion(materia._id);
-        setEstadoInscripcion(estado);
+        const estado = await verificarEstadoInscripcion(materia._id); // Llama al backend para obtener el estado de la solicitud
+        setEstadoInscripcion(estado); // Guarda el estado en el componente
       };
 
       obtenerEstado();
     }, [materia._id]);
 
     return (
-      <li
-        key={materia._id}
-        className="list-group-item d-flex justify-content-between align-items-center"
-      >
+      <li className="list-group-item d-flex justify-content-between align-items-center">
         <div>
           <h5>{materia.name}</h5>
           <p>{materia.level}</p>
           <small>
             Profesor: {materia.professor?.name || "Sin profesor asignado"}
           </small>
+          {/* Mostrar el estado de la inscripción */}
+          <div className="mt-2">
+            {estadoInscripcion && (
+              <span
+                className={`badge ${
+                  estadoInscripcion === "Pendiente"
+                    ? "bg-warning text-dark"
+                    : estadoInscripcion === "Aceptado"
+                    ? "bg-success"
+                    : "bg-danger"
+                }`}
+              >
+                {estadoInscripcion}
+              </span>
+            )}
+          </div>
         </div>
         <button
           className="btn btn-primary btn-sm"
