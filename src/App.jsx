@@ -17,6 +17,7 @@ import ProfessorRoute from "./components/ProfessorRoute";
 import EditUser from "./pages/EditUser";
 import EditMateria from "./pages/EditMateria";
 import CreateMateria from "./pages/CreateMateria";
+import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -98,6 +99,14 @@ const App = () => {
             <Route
               path="/admin/materias/create"
               element={<CreateMateria />}
+            />
+            <Route
+              path="/professor/materias/:id"
+              element={
+                <ProfessorRoute>
+                  <ProfessorMateriaPage />
+                </ProfessorRoute>
+              }
             />
           </Routes>
         </main>
