@@ -20,9 +20,7 @@ const EditMateria = () => {
     const fetchMateria = async () => {
       try {
         const response = await fetch(`${API_URL}/materias/${id}`, {
-          headers: {
-            Authorization: token,
-          },
+          headers: { Authorization: token },
         });
 
         if (!response.ok) {
@@ -40,22 +38,21 @@ const EditMateria = () => {
     const fetchProfesores = async () => {
       try {
         const response = await fetch(`${API_URL}/admin/usuarios`, {
-          headers: {
-            Authorization: token,
-          },
+          headers: { Authorization: token },
         });
 
         if (!response.ok) {
-          throw new Error("Error al cargar la lista de profesores");
+          throw new Error("Error al cargar la lista de usuarios");
         }
 
         const data = await response.json();
+        // Filtrar usuarios que sean "profesor" o "admin"
         const profesoresFiltrados = data.filter(
-          (usuario) => usuario.role === "profesor"
+          (usuario) => usuario.role === "profesor" || usuario.role === "admin"
         );
         setProfesores(profesoresFiltrados);
       } catch (error) {
-        setError("Error al cargar la lista de profesores");
+        setError("Error al cargar la lista de usuarios");
         console.error(error);
       }
     };
@@ -159,7 +156,7 @@ const EditMateria = () => {
                 key={profesor._id}
                 value={profesor._id}
               >
-                {profesor.name}
+                {profesor.name} ({profesor.role})
               </option>
             ))}
           </select>
