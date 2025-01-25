@@ -8,10 +8,12 @@ import Program from "./pages/Program";
 import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
+import ProfessorDashboard from "./pages/ProfessorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
+import ProfessorRoute from "./components/ProfessorRoute";
 import EditUser from "./pages/EditUser";
 import EditMateria from "./pages/EditMateria";
 import CreateMateria from "./pages/CreateMateria";
@@ -57,6 +59,14 @@ const App = () => {
                 <PrivateRoute>
                   <Dashboard />
                 </PrivateRoute>
+              }
+            />
+            <Route
+              path="/professor-dashboard"
+              element={
+                <ProfessorRoute>
+                  <ProfessorDashboard />
+                </ProfessorRoute>
               }
             />
 

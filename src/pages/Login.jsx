@@ -31,6 +31,8 @@ const Login = () => {
       // Redirigir según el rol del usuario
       if (data.user.role === "admin") {
         navigate("/admin-dashboard"); // Redirige al dashboard de admin
+      } else if (data.user.role === "profesor") {
+        navigate("/professor-dashboard"); // Redirige al dashboard de profesor
       } else if (data.user.role === "alumno") {
         navigate("/dashboard"); // Redirige al dashboard de alumno
       } else {
