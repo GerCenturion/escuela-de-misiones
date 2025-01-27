@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import FileUploader from "../components/FileUploader";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
@@ -161,6 +162,7 @@ const ProfessorMateriaPage = () => {
           </li>
         ))}
       </ul>
+      <FileUploader></FileUploader>
     </div>
   );
 };
