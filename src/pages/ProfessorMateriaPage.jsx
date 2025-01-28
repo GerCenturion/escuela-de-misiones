@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FileUploader from "../components/FileUploader";
+import ClassManager from "../components/ClassManager";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
@@ -163,29 +164,14 @@ const ProfessorMateriaPage = () => {
         ))}
       </ul>
 
-      <h2 className="mt-4">Archivos de la Materia</h2>
-      {materia.files && materia.files.length > 0 ? (
-        <ul className="list-group">
-          {materia.files.map((file, index) => (
-            <li
-              key={index}
-              className="list-group-item"
-            >
-              <a
-                href={file.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {file.fileName}
-              </a>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No hay archivos subidos para esta materia.</p>
-      )}
-
-      <FileUploader materiaId={id} />
+      <FileUploader />
+      <ClassManager
+        materiaId={id}
+        classes={materia.classes || []}
+        setClasses={(newClasses) =>
+          setMateria((prev) => ({ ...prev, classes: newClasses }))
+        }
+      />
     </div>
   );
 };
