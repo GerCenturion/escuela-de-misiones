@@ -3,28 +3,20 @@ import React, { useState } from "react";
 const FileUploader = () => {
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const token = localStorage.getItem("token");
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-
-    if (
-      selectedFile &&
-      !["application/pdf", "image/jpeg", "image/png"].includes(
-        selectedFile.type
-      )
-    ) {
-      alert("Solo se permiten archivos .pdf, .jpg y .png");
+    if (!selectedFile) {
+      alert("Por favor selecciona un archivo.");
       return;
     }
-
     setFile(selectedFile);
   };
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
-
     if (!file) {
       alert("Selecciona un archivo para subir");
       return;
@@ -34,11 +26,9 @@ const FileUploader = () => {
     formData.append("file", file);
 
     try {
+      setUploadStatus("Subiendo archivo...");
       const response = await fetch(`${API_URL}/uploads/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: formData,
       });
 
@@ -48,8 +38,8 @@ const FileUploader = () => {
       }
 
       const data = await response.json();
-      setUploadStatus(`Archivo subido con éxito: ${data.fileUrl}`);
-      setFile(null);
+      setUploadStatus("Archivo subido con éxito");
+      setFileUrl(data.fileUrl); // Guarda la URL pública generada por Spaces
     } catch (error) {
       console.error("Error al subir archivo:", error);
       setUploadStatus("Error al subir archivo");
@@ -58,24 +48,24 @@ const FileUploader = () => {
 
   return (
     <div>
-      <h2 className="mt-4">Subir Archivos</h2>
+      <h2>Subir Archivos</h2>
       <form onSubmit={handleFileUpload}>
-        <div className="mb-3">
-          <input
-            type="file"
-            name="file"
-            className="form-control"
-            onChange={handleFileChange}
-          />
-        </div>
-        <button
-          type="submit"
-          className="btn btn-primary"
-        >
-          Subir Archivo
-        </button>
+        <input
+          type="file"
+          onChange={handleFileChange}
+        />
+        <button type="submit">Subir</button>
       </form>
-      {uploadStatus && <p className="mt-3">{uploadStatus}</p>}
+      {uploadStatus && <p>{uploadStatus}</p>}
+      {fileUrl && (
+        <a
+          href={fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Descargar Archivo
+        </a>
+      )}
     </div>
   );
 };
