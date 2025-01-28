@@ -162,7 +162,30 @@ const ProfessorMateriaPage = () => {
           </li>
         ))}
       </ul>
-      <FileUploader></FileUploader>
+
+      <h2 className="mt-4">Archivos de la Materia</h2>
+      {materia.files && materia.files.length > 0 ? (
+        <ul className="list-group">
+          {materia.files.map((file, index) => (
+            <li
+              key={index}
+              className="list-group-item"
+            >
+              <a
+                href={file.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {file.fileName}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No hay archivos subidos para esta materia.</p>
+      )}
+
+      <FileUploader materiaId={id} />
     </div>
   );
 };

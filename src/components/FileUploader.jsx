@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const FileUploader = () => {
+const FileUploader = ({ materiaId }) => {
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
   const [fileUrl, setFileUrl] = useState("");
@@ -27,7 +27,7 @@ const FileUploader = () => {
 
     try {
       setUploadStatus("Subiendo archivo...");
-      const response = await fetch(`${API_URL}/uploads/upload`, {
+      const response = await fetch(`${API_URL}/uploads/upload/${materiaId}`, {
         method: "POST",
         body: formData,
       });
@@ -38,7 +38,7 @@ const FileUploader = () => {
       }
 
       const data = await response.json();
-      setUploadStatus("Archivo subido con éxito");
+      setUploadStatus("Archivo subido y vinculado con éxito");
       setFileUrl(data.fileUrl); // Guarda la URL pública generada por Spaces
     } catch (error) {
       console.error("Error al subir archivo:", error);
