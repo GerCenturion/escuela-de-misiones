@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FileUploader from "../components/FileUploader";
+import ExamenForm from "../components/ExamenForm";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
@@ -9,6 +10,7 @@ const ProfessorMateriaPage = () => {
   const [videoTitle, setVideoTitle] = useState(""); // Se agregó el estado para el título del video
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mostrarExamenForm, setMostrarExamenForm] = useState(false); // Para mostrar u ocultar el formulario de examen
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -338,6 +340,21 @@ const ProfessorMateriaPage = () => {
         </ul>
       ) : (
         <p>No hay videos asociados.</p>
+      )}
+      {/* Botón para abrir el modal del examen */}
+      <button
+        className="btn btn-success mb-3"
+        onClick={() => setMostrarExamenForm(true)}
+      >
+        Crear Examen
+      </button>
+
+      {/* Modal de ExamenForm */}
+      {mostrarExamenForm && (
+        <ExamenForm
+          materiaId={id}
+          onClose={() => setMostrarExamenForm(false)}
+        />
       )}
     </div>
   );
