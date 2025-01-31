@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FileUploader from "../components/FileUploader";
-import ClassManager from "../components/ClassManager";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
   const [materia, setMateria] = useState(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoTitle, setVideoTitle] = useState(""); // Se agregó el estado para el título del video
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -34,6 +35,60 @@ const ProfessorMateriaPage = () => {
 
     fetchMateria();
   }, [id, token]);
+
+  const agregarVideo = async () => {
+    if (!videoUrl || !videoTitle) {
+      alert("Ingrese un título y una URL válida");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/materias/${id}/agregar-video`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url: videoUrl, title: videoTitle }),
+      });
+
+      if (!response.ok) throw new Error("Error al agregar el video");
+
+      const data = await response.json();
+      alert(data.message);
+      setMateria(data.materia);
+      setVideoUrl("");
+      setVideoTitle("");
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo agregar el video.");
+    }
+  };
+
+  const eliminarVideo = async (url) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este video?"))
+      return;
+
+    try {
+      const response = await fetch(`${API_URL}/materias/${id}/eliminar-video`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) throw new Error("Error al eliminar el video");
+
+      const data = await response.json();
+      alert(data.message);
+      setMateria(data.materia);
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo eliminar el video.");
+    }
+  };
 
   const gestionarInscripcion = async (alumnoId, status) => {
     const currentStatus = materia.students.find(
@@ -123,7 +178,7 @@ const ProfessorMateriaPage = () => {
   };
 
   if (!materia) {
-    return <div>Cargando materia....</div>;
+    return <div>Cargando materia...</div>;
   }
 
   return (
@@ -195,7 +250,6 @@ const ProfessorMateriaPage = () => {
         ))}
       </ul>
 
-
       {/* Subida de archivos */}
       <FileUploader
         materiaId={id}
@@ -205,12 +259,10 @@ const ProfessorMateriaPage = () => {
       {/* Listado de archivos */}
       <h2 className="mt-4">Archivos Subidos</h2>
       {materia.files.length > 0 ? (
-
         <ul className="list-group">
           {materia.files.map((file, index) => (
             <li
               key={index}
-
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <span>{file.fileName}</span>
@@ -230,15 +282,63 @@ const ProfessorMateriaPage = () => {
                   Eliminar
                 </button>
               </div>
-
             </li>
           ))}
         </ul>
       ) : (
         <p>No hay archivos subidos para esta materia.</p>
       )}
+      {/* Sección para agregar videos */}
+      <h2 className="mt-4">Agregar Video de YouTube</h2>
+      <input
+        type="text"
+        className="form-control mb-2"
+        placeholder="Título del video"
+        value={videoTitle}
+        onChange={(e) => setVideoTitle(e.target.value)}
+      />
+      <input
+        type="text"
+        className="form-control mb-2"
+        placeholder="URL de YouTube"
+        value={videoUrl}
+        onChange={(e) => setVideoUrl(e.target.value)}
+      />
+      <button
+        className="btn btn-success"
+        onClick={agregarVideo}
+      >
+        Agregar Video
+      </button>
 
-
+      {/* Listado de videos */}
+      <h2 className="mt-4">Videos Asociados</h2>
+      {materia?.videos.length > 0 ? (
+        <ul className="list-group">
+          {materia.videos.map((video, index) => (
+            <li
+              key={index}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <a
+                href={video.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {video.title}
+              </a>
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => eliminarVideo(video.url)}
+              >
+                Eliminar
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No hay videos asociados.</p>
+      )}
     </div>
   );
 };
