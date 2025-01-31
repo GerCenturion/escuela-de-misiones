@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 
+
 const FileUploader = ({ materiaId, onUploadSuccess }) => {
+
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -37,9 +39,11 @@ const FileUploader = ({ materiaId, onUploadSuccess }) => {
       }
 
       const data = await response.json();
+
       setUploadStatus("Archivo subido con éxito");
 
       if (onUploadSuccess) onUploadSuccess(data.fileUrl);
+
     } catch (error) {
       console.error("Error al subir archivo:", error);
       setUploadStatus("Error al subir archivo");
