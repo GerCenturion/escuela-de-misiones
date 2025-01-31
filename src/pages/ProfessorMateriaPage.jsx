@@ -6,7 +6,7 @@ const ProfessorMateriaPage = () => {
   const { id } = useParams(); // ID de la materia desde la URL
   const [materia, setMateria] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
+  const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ const ProfessorMateriaPage = () => {
   }, [id, token]);
 
   const gestionarInscripcion = async (alumnoId, status) => {
-    // Validar si el estado seleccionado ya coincide con el estado actual
     const currentStatus = materia.students.find(
       (student) => student.student._id === alumnoId
     )?.status;
@@ -49,9 +48,7 @@ const ProfessorMateriaPage = () => {
       `¿Estás seguro de que deseas cambiar el estado a "${status}"?`
     );
 
-    if (!confirmChange) {
-      return; // Salir si el usuario cancela
-    }
+    if (!confirmChange) return;
 
     setLoading(true);
 
@@ -75,7 +72,7 @@ const ProfessorMateriaPage = () => {
       const data = await response.json();
       alert(data.message);
 
-      // Actualizamos la lista de estudiantes
+      // Recargar los datos de la materia para reflejar los cambios
       setMateria((prevMateria) => ({
         ...prevMateria,
         students: prevMateria.students.map((student) =>
@@ -87,6 +84,40 @@ const ProfessorMateriaPage = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const eliminarArchivo = async (fileUrl) => {
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de que deseas eliminar este archivo?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${API_URL}/uploads/delete-file/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fileUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar el archivo");
+      }
+
+      const data = await response.json();
+      alert(data.message);
+
+      // Eliminar el archivo de la lista local
+      setMateria((prevMateria) => ({
+        ...prevMateria,
+        files: prevMateria.files.filter((file) => file.fileUrl !== fileUrl),
+      }));
+    } catch (error) {
+      setError("Error al eliminar el archivo");
+      console.error(error);
     }
   };
 
@@ -162,7 +193,45 @@ const ProfessorMateriaPage = () => {
           </li>
         ))}
       </ul>
-      <FileUploader></FileUploader>
+
+      {/* Subida de archivos */}
+      <FileUploader
+        materiaId={id}
+        onUploadSuccess={() => window.location.reload()}
+      />
+
+      {/* Listado de archivos */}
+      <h2 className="mt-4">Archivos Subidos</h2>
+      {materia.files.length > 0 ? (
+        <ul className="list-group">
+          {materia.files.map((file, index) => (
+            <li
+              key={index}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span>{file.fileName}</span>
+              <div>
+                <a
+                  href={file.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary btn-sm me-2"
+                >
+                  Descargar
+                </a>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => eliminarArchivo(file.fileUrl)}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No hay archivos subidos para esta materia.</p>
+      )}
     </div>
   );
 };

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 
-const FileUploader = () => {
+const FileUploader = ({ materiaId, onUploadSuccess }) => {
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const handleFileChange = (e) => {
@@ -27,7 +26,7 @@ const FileUploader = () => {
 
     try {
       setUploadStatus("Subiendo archivo...");
-      const response = await fetch(`${API_URL}/uploads/upload`, {
+      const response = await fetch(`${API_URL}/uploads/upload/${materiaId}`, {
         method: "POST",
         body: formData,
       });
@@ -39,7 +38,8 @@ const FileUploader = () => {
 
       const data = await response.json();
       setUploadStatus("Archivo subido con éxito");
-      setFileUrl(data.fileUrl); // Guarda la URL pública generada por Spaces
+
+      if (onUploadSuccess) onUploadSuccess(data.fileUrl);
     } catch (error) {
       console.error("Error al subir archivo:", error);
       setUploadStatus("Error al subir archivo");
@@ -57,15 +57,6 @@ const FileUploader = () => {
         <button type="submit">Subir</button>
       </form>
       {uploadStatus && <p>{uploadStatus}</p>}
-      {fileUrl && (
-        <a
-          href={fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Descargar Archivo
-        </a>
-      )}
     </div>
   );
 };
