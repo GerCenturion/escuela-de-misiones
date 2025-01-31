@@ -123,7 +123,7 @@ const ProfessorMateriaPage = () => {
   };
 
   if (!materia) {
-    return <div>Cargando materia...</div>;
+    return <div>Cargando materia....</div>;
   }
 
   return (
