@@ -122,10 +122,31 @@ const ProfessorMateriaPage = () => {
       <p>Nivel: {materia.level}</p>
 
       <button
-        className="btn btn-secondary mb-4"
+        className="btn btn-secondary mb-3 me-2"
         onClick={() => navigate("/professor-dashboard")}
       >
-        Volver al Dashboard
+        Mis Materias
+      </button>
+      {/* Botones para abrir modales */}
+      <button
+        className="btn btn-success mb-3 me-2"
+        onClick={() => setMostrarExamenForm(true)}
+      >
+        Crear Examen
+      </button>
+
+      <button
+        className="btn btn-warning mb-3 me-2"
+        onClick={() => setMostrarFileUploader(true)}
+      >
+        Subir Archivo
+      </button>
+
+      <button
+        className="btn btn-info mb-3"
+        onClick={() => setMostrarVideoManager(true)}
+      >
+        Administrar Videos
       </button>
 
       <h2>Solicitudes de Inscripción</h2>
@@ -234,27 +255,6 @@ const ProfessorMateriaPage = () => {
         <p>No hay videos asociados.</p>
       )}
       <ExamenesListModal materiaId={id} />
-      {/* Botones para abrir modales */}
-      <button
-        className="btn btn-success mb-3 me-2"
-        onClick={() => setMostrarExamenForm(true)}
-      >
-        Crear Examen
-      </button>
-
-      <button
-        className="btn btn-warning mb-3 me-2"
-        onClick={() => setMostrarFileUploader(true)}
-      >
-        Subir Archivo
-      </button>
-
-      <button
-        className="btn btn-info mb-3"
-        onClick={() => setMostrarVideoManager(true)}
-      >
-        Administrar Videos
-      </button>
 
       {/* Modal de Crear Examen */}
       {mostrarExamenForm && (
