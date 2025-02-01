@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const FileUploaderModal = ({ materiaId, onUploadSuccess, onClose }) => {
+const FileUploaderModal = ({ materiaId, onClose }) => {
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -36,15 +36,10 @@ const FileUploaderModal = ({ materiaId, onUploadSuccess, onClose }) => {
         throw new Error(errorResponse.message || "Error al subir archivo");
       }
 
-      const data = await response.json();
-      setUploadStatus("Archivo subido con éxito");
+      alert("Archivo subido con éxito");
 
-      // Llamar a la función onUploadSuccess para actualizar la lista de archivos sin recargar la página
-      if (onUploadSuccess) onUploadSuccess(data.fileUrl);
-
-      setTimeout(() => {
-        onClose(); // Cierra el modal automáticamente tras subir el archivo
-      }, 1500);
+      // ✅ Recargar la página para ver los cambios reflejados
+      window.location.reload();
     } catch (error) {
       console.error("Error al subir archivo:", error);
       setUploadStatus("Error al subir archivo");

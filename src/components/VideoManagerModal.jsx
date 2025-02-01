@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
+const VideoManagerModal = ({ materiaId, onClose }) => {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [videos, setVideos] = useState([]);
@@ -48,14 +48,10 @@ const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
 
       if (!response.ok) throw new Error("Error al agregar el video");
 
-      const data = await response.json();
       alert("Video agregado con éxito");
 
-      setVideos(data.materia.videos);
-      setVideoUrl("");
-      setVideoTitle("");
-
-      if (onUpdate) onUpdate();
+      // ✅ Recargar la página para ver los cambios
+      window.location.reload();
     } catch (error) {
       console.error(error);
       alert("No se pudo agregar el video.");
@@ -81,20 +77,16 @@ const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
 
       if (!response.ok) throw new Error("Error al eliminar el video");
 
-      const data = await response.json();
       alert("Video eliminado con éxito");
 
-      setVideos(data.materia.videos);
-
-      if (onUpdate) onUpdate();
+      // ✅ Actualizar la lista de videos sin recargar la página
+      setVideos((prevVideos) =>
+        prevVideos.filter((video) => video.url !== url)
+      );
     } catch (error) {
       console.error(error);
       alert("No se pudo eliminar el video.");
     }
-  };
-
-  const handleEliminarVideo = (url) => {
-    eliminarVideo(url);
   };
 
   return (
@@ -159,7 +151,7 @@ const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
                     </a>
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => handleEliminarVideo(video.url)}
+                      onClick={() => eliminarVideo(video.url)}
                     >
                       Eliminar
                     </button>
