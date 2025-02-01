@@ -210,7 +210,7 @@ const ProfessorMateriaPage = () => {
       >
         Administrar Videos
       </button>
-      <h2>Solicitudes de Inscripción</h2>
+      <h2>Alumnos</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       <ul className="list-group">
         {materia.students.map((student) => (

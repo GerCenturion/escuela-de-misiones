@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 const ExamenForm = ({ materiaId, onClose }) => {
   const [titulo, setTitulo] = useState(""); // Estado para el título
-  const [preguntas, setPreguntas] = useState([{ texto: "", puntuacion: 0 }]);
+  const [preguntas, setPreguntas] = useState([{ texto: "", puntuacion: "" }]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const totalPuntos = preguntas.reduce(
@@ -17,7 +17,7 @@ const ExamenForm = ({ materiaId, onClose }) => {
       );
       return;
     }
-    setPreguntas([...preguntas, { texto: "", puntuacion: 0 }]);
+    setPreguntas([...preguntas, { texto: "", puntuacion: "" }]);
   };
 
   const actualizarPregunta = (index, campo, valor) => {
