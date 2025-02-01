@@ -2,15 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FileUploader from "../components/FileUploader";
 import ExamenForm from "../components/ExamenForm";
+import ExamenesListModal from "../components/ExamenesListModal";
+import VideoManagerModal from "../components/VideoManagerModal";
 
 const ProfessorMateriaPage = () => {
-  const { id } = useParams(); // ID de la materia desde la URL
+  const { id } = useParams();
   const [materia, setMateria] = useState(null);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [videoTitle, setVideoTitle] = useState(""); // Se agregó el estado para el título del video
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mostrarExamenForm, setMostrarExamenForm] = useState(false); // Para mostrar u ocultar el formulario de examen
+  const [mostrarExamenForm, setMostrarExamenForm] = useState(false);
+  const [mostrarExamenesModal, setMostrarExamenesModal] = useState(false);
+  const [mostrarFileUploader, setMostrarFileUploader] = useState(false);
+  const [mostrarVideoManager, setMostrarVideoManager] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -38,60 +41,7 @@ const ProfessorMateriaPage = () => {
     fetchMateria();
   }, [id, token]);
 
-  const agregarVideo = async () => {
-    if (!videoUrl || !videoTitle) {
-      alert("Ingrese un título y una URL válida");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/materias/${id}/agregar-video`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url: videoUrl, title: videoTitle }),
-      });
-
-      if (!response.ok) throw new Error("Error al agregar el video");
-
-      const data = await response.json();
-      alert(data.message);
-      setMateria(data.materia);
-      setVideoUrl("");
-      setVideoTitle("");
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo agregar el video.");
-    }
-  };
-
-  const eliminarVideo = async (url) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este video?"))
-      return;
-
-    try {
-      const response = await fetch(`${API_URL}/materias/${id}/eliminar-video`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ url }),
-      });
-
-      if (!response.ok) throw new Error("Error al eliminar el video");
-
-      const data = await response.json();
-      alert(data.message);
-      setMateria(data.materia);
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo eliminar el video.");
-    }
-  };
-
+  // Cambiar el estado de inscripción de un alumno
   const gestionarInscripcion = async (alumnoId, status) => {
     const currentStatus = materia.students.find(
       (student) => student.student._id === alumnoId
@@ -145,39 +95,22 @@ const ProfessorMateriaPage = () => {
     }
   };
 
-  const eliminarArchivo = async (fileUrl) => {
-    const confirmDelete = window.confirm(
-      "¿Estás seguro de que deseas eliminar este archivo?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const response = await fetch(`${API_URL}/uploads/delete-file/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ fileUrl }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al eliminar el archivo");
+  // Cerrar modales con tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMostrarExamenForm(false);
+        setMostrarExamenesModal(false);
+        setMostrarFileUploader(false);
+        setMostrarVideoManager(false);
       }
+    };
 
-      const data = await response.json();
-      alert(data.message);
-
-      // Eliminar el archivo de la lista local
-      setMateria((prevMateria) => ({
-        ...prevMateria,
-        files: prevMateria.files.filter((file) => file.fileUrl !== fileUrl),
-      }));
-    } catch (error) {
-      setError("Error al eliminar el archivo");
-      console.error(error);
-    }
-  };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   if (!materia) {
     return <div>Cargando materia...</div>;
@@ -217,9 +150,7 @@ const ProfessorMateriaPage = () => {
                       ? "bg-warning"
                       : student.status === "Aceptado"
                       ? "bg-success"
-                      : student.status === "Rechazado"
-                      ? "bg-danger"
-                      : "bg-secondary"
+                      : "bg-danger"
                   }`}
                 >
                   {student.status || "Sin estado"}
@@ -227,37 +158,21 @@ const ProfessorMateriaPage = () => {
               </p>
             </div>
             <div>
-              {loading ? (
-                <button
-                  className="btn btn-primary btn-sm"
-                  disabled
-                >
-                  Cargando...
-                </button>
-              ) : (
-                <select
-                  className="form-select form-select-sm"
-                  value={student.status || ""}
-                  onChange={(e) =>
-                    gestionarInscripcion(student.student._id, e.target.value)
-                  }
-                >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Aceptado">Aceptado</option>
-                  <option value="Rechazado">Rechazado</option>
-                </select>
-              )}
+              <select
+                className="form-select form-select-sm"
+                value={student.status || ""}
+                onChange={(e) =>
+                  gestionarInscripcion(student.student._id, e.target.value)
+                }
+              >
+                <option value="Pendiente">Pendiente</option>
+                <option value="Aceptado">Aceptado</option>
+                <option value="Rechazado">Rechazado</option>
+              </select>
             </div>
           </li>
         ))}
       </ul>
-
-      {/* Subida de archivos */}
-      <FileUploader
-        materiaId={id}
-        onUploadSuccess={() => window.location.reload()}
-      />
-
       {/* Listado de archivos */}
       <h2 className="mt-4">Archivos Subidos</h2>
       {materia.files.length > 0 ? (
@@ -290,29 +205,6 @@ const ProfessorMateriaPage = () => {
       ) : (
         <p>No hay archivos subidos para esta materia.</p>
       )}
-      {/* Sección para agregar videos */}
-      <h2 className="mt-4">Agregar Video de YouTube</h2>
-      <input
-        type="text"
-        className="form-control mb-2"
-        placeholder="Título del video"
-        value={videoTitle}
-        onChange={(e) => setVideoTitle(e.target.value)}
-      />
-      <input
-        type="text"
-        className="form-control mb-2"
-        placeholder="URL de YouTube"
-        value={videoUrl}
-        onChange={(e) => setVideoUrl(e.target.value)}
-      />
-      <button
-        className="btn btn-success"
-        onClick={agregarVideo}
-      >
-        Agregar Video
-      </button>
-
       {/* Listado de videos */}
       <h2 className="mt-4">Videos Asociados</h2>
       {materia?.videos.length > 0 ? (
@@ -341,19 +233,93 @@ const ProfessorMateriaPage = () => {
       ) : (
         <p>No hay videos asociados.</p>
       )}
-      {/* Botón para abrir el modal del examen */}
+      <ExamenesListModal materiaId={id} />
+      {/* Botones para abrir modales */}
       <button
-        className="btn btn-success mb-3"
+        className="btn btn-success mb-3 me-2"
         onClick={() => setMostrarExamenForm(true)}
       >
         Crear Examen
       </button>
 
-      {/* Modal de ExamenForm */}
+      <button
+        className="btn btn-warning mb-3 me-2"
+        onClick={() => setMostrarFileUploader(true)}
+      >
+        Subir Archivo
+      </button>
+
+      <button
+        className="btn btn-info mb-3"
+        onClick={() => setMostrarVideoManager(true)}
+      >
+        Administrar Videos
+      </button>
+
+      {/* Modal de Crear Examen */}
       {mostrarExamenForm && (
-        <ExamenForm
+        <div
+          className="modal fade show d-block"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Crear Examen</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "¿Estás seguro de que quieres cerrar sin guardar?"
+                      )
+                    ) {
+                      setMostrarExamenForm(false);
+                    }
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <ExamenForm
+                  materiaId={id}
+                  onClose={() => {
+                    if (
+                      window.confirm(
+                        "¿Estás seguro de que quieres guardar los cambios?"
+                      )
+                    ) {
+                      setMostrarExamenForm(false);
+                      window.location.reload(); // Recargar la página
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarExamenesModal && (
+        <ExamenesListModal
           materiaId={id}
-          onClose={() => setMostrarExamenForm(false)}
+          onClose={() => setMostrarExamenesModal(false)}
+        />
+      )}
+      {mostrarFileUploader && (
+        <FileUploader
+          materiaId={id}
+          onClose={() => setMostrarFileUploader(false)}
+        />
+      )}
+      {mostrarVideoManager && (
+        <VideoManagerModal
+          materiaId={id}
+          onClose={() => setMostrarVideoManager(false)}
         />
       )}
     </div>

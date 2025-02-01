@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-
-const FileUploader = ({ materiaId, onUploadSuccess }) => {
-
+const FileUploaderModal = ({ materiaId, onUploadSuccess, onClose }) => {
   const [file, setFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -39,30 +37,82 @@ const FileUploader = ({ materiaId, onUploadSuccess }) => {
       }
 
       const data = await response.json();
-
       setUploadStatus("Archivo subido con éxito");
 
+      // Llamar a la función onUploadSuccess para actualizar la lista de archivos sin recargar la página
       if (onUploadSuccess) onUploadSuccess(data.fileUrl);
 
+      setTimeout(() => {
+        onClose(); // Cierra el modal automáticamente tras subir el archivo
+      }, 1500);
     } catch (error) {
       console.error("Error al subir archivo:", error);
       setUploadStatus("Error al subir archivo");
     }
   };
 
+  // Cerrar modal con la tecla "Esc"
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
   return (
-    <div>
-      <h2>Subir Archivos</h2>
-      <form onSubmit={handleFileUpload}>
-        <input
-          type="file"
-          onChange={handleFileChange}
-        />
-        <button type="submit">Subir</button>
-      </form>
-      {uploadStatus && <p>{uploadStatus}</p>}
+    <div
+      className="modal fade show d-block"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="modal-dialog modal-dialog-centered"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Subir Archivo</h5>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={onClose}
+            ></button>
+          </div>
+          <div className="modal-body">
+            <form onSubmit={handleFileUpload}>
+              <input
+                type="file"
+                className="form-control mb-3"
+                onChange={handleFileChange}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary w-100"
+              >
+                Subir
+              </button>
+            </form>
+            {uploadStatus && <p className="mt-3 text-center">{uploadStatus}</p>}
+          </div>
+          <div className="modal-footer">
+            <button
+              className="btn btn-secondary w-100"
+              onClick={onClose}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default FileUploader;
+export default FileUploaderModal;
