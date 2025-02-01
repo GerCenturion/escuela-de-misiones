@@ -83,14 +83,14 @@ const ExamenForm = ({ materiaId, onClose }) => {
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="modal-header">
+        {/* <div className="modal-header">
           <h5 className="modal-title">Crear Examen</h5>
           <button
             type="button"
             className="btn-close"
             onClick={onClose}
           ></button>
-        </div>
+        </div> */}
         <div className="modal-body">
           <label>
             <strong>Título del Examen</strong>
