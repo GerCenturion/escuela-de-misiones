@@ -93,6 +93,10 @@ const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
     }
   };
 
+  const handleEliminarVideo = (url) => {
+    eliminarVideo(url);
+  };
+
   return (
     <div
       className="modal fade show d-block"
@@ -155,7 +159,7 @@ const VideoManagerModal = ({ materiaId, onClose, onUpdate }) => {
                     </a>
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => eliminarVideo(video.url)}
+                      onClick={() => handleEliminarVideo(video.url)}
                     >
                       Eliminar
                     </button>

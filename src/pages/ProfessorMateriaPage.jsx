@@ -18,26 +18,27 @@ const ProfessorMateriaPage = () => {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchMateria = async () => {
-      try {
-        const response = await fetch(`${API_URL}/materias/${id}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  const fetchMateria = async () => {
+    try {
+      const response = await fetch(`${API_URL}/materias/${id}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        if (!response.ok) {
-          throw new Error("Error al cargar la materia");
-        }
-
-        const data = await response.json();
-        setMateria(data);
-      } catch (error) {
-        setError("Error al cargar la materia");
-        console.error(error);
+      if (!response.ok) {
+        throw new Error("Error al cargar la materia");
       }
-    };
 
+      const data = await response.json();
+      setMateria(data);
+    } catch (error) {
+      setError("Error al cargar la materia");
+      console.error(error);
+    }
+  };
+
+  // Ejecutar la carga inicial
+  useEffect(() => {
     fetchMateria();
   }, [id, token]);
 
@@ -81,6 +82,7 @@ const ProfessorMateriaPage = () => {
       alert(data.message);
 
       // Recargar los datos de la materia para reflejar los cambios
+
       setMateria((prevMateria) => ({
         ...prevMateria,
         students: prevMateria.students.map((student) =>
@@ -112,6 +114,64 @@ const ProfessorMateriaPage = () => {
     };
   }, []);
 
+  const eliminarArchivo = async (fileUrl) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este archivo?"))
+      return;
+
+    try {
+      const response = await fetch(`${API_URL}/uploads/delete-file/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fileUrl }), // ✅ Se envía fileUrl en el body
+      });
+
+      if (!response.ok) throw new Error("Error al eliminar el archivo");
+
+      alert("Archivo eliminado con éxito");
+
+      // Actualizar el estado eliminando el archivo
+      setMateria((prevMateria) => ({
+        ...prevMateria,
+        files: prevMateria.files.filter((file) => file.fileUrl !== fileUrl),
+      }));
+    } catch (error) {
+      console.error("Error al eliminar archivo:", error);
+      alert("No se pudo eliminar el archivo.");
+    }
+  };
+
+  const eliminarVideo = async (videoUrl) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este video?"))
+      return;
+
+    try {
+      const response = await fetch(`${API_URL}/materias/${id}/eliminar-video`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url: videoUrl }),
+      });
+
+      if (!response.ok) throw new Error("Error al eliminar el video");
+
+      alert("Video eliminado con éxito");
+
+      // Actualizar el estado eliminando el video correspondiente
+      setMateria((prevMateria) => ({
+        ...prevMateria,
+        videos: prevMateria.videos.filter((video) => video.url !== videoUrl),
+      }));
+    } catch (error) {
+      console.error("Error al eliminar video:", error);
+      alert("No se pudo eliminar el video.");
+    }
+  };
+
   if (!materia) {
     return <div>Cargando materia...</div>;
   }
@@ -120,7 +180,6 @@ const ProfessorMateriaPage = () => {
     <div className="container mt-5">
       <h1>{materia.name}</h1>
       <p>Nivel: {materia.level}</p>
-
       <button
         className="btn btn-secondary mb-3 me-2"
         onClick={() => navigate("/professor-dashboard")}
@@ -131,6 +190,7 @@ const ProfessorMateriaPage = () => {
       <button
         className="btn btn-success mb-3 me-2"
         onClick={() => setMostrarExamenForm(true)}
+        onUploadSuccess={fetchMateria}
       >
         Crear Examen
       </button>
@@ -138,6 +198,7 @@ const ProfessorMateriaPage = () => {
       <button
         className="btn btn-warning mb-3 me-2"
         onClick={() => setMostrarFileUploader(true)}
+        onUploadSuccess={fetchMateria}
       >
         Subir Archivo
       </button>
@@ -145,13 +206,12 @@ const ProfessorMateriaPage = () => {
       <button
         className="btn btn-info mb-3"
         onClick={() => setMostrarVideoManager(true)}
+        onUploadSuccess={fetchMateria}
       >
         Administrar Videos
       </button>
-
       <h2>Solicitudes de Inscripción</h2>
       {error && <div className="alert alert-danger">{error}</div>}
-
       <ul className="list-group">
         {materia.students.map((student) => (
           <li
@@ -255,7 +315,6 @@ const ProfessorMateriaPage = () => {
         <p>No hay videos asociados.</p>
       )}
       <ExamenesListModal materiaId={id} />
-
       {/* Modal de Crear Examen */}
       {mostrarExamenForm && (
         <div
@@ -303,7 +362,6 @@ const ProfessorMateriaPage = () => {
           </div>
         </div>
       )}
-
       {mostrarExamenesModal && (
         <ExamenesListModal
           materiaId={id}
