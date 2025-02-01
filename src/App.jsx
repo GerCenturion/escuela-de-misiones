@@ -18,6 +18,7 @@ import EditUser from "./pages/EditUser";
 import EditMateria from "./pages/EditMateria";
 import CreateMateria from "./pages/CreateMateria";
 import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
+import MateriaDetalle from "./pages/MateriaDetalle";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -28,6 +29,10 @@ const App = () => {
         <main>
           <Routes>
             {/* Rutas públicas */}
+            <Route
+              path="/materia/:id"
+              element={<MateriaDetalle />}
+            />
             <Route
               path="/"
               element={<Home />}
@@ -62,6 +67,7 @@ const App = () => {
                 </PrivateRoute>
               }
             />
+
             <Route
               path="/professor-dashboard"
               element={

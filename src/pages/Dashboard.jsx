@@ -87,7 +87,7 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      return data.status; // "Pendiente", "Aceptado", "Rechazado" o null
+      return data.status;
     } catch (error) {
       console.error("Error al verificar estado de inscripción:", error.message);
       return null;
@@ -112,9 +112,8 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      alert(data.message); // Mensaje de éxito
+      alert(data.message);
 
-      // Actualizamos el estado para inhabilitar el botón
       setAvailableMaterias((prevMaterias) =>
         prevMaterias.map((materia) =>
           materia._id === materiaId
@@ -133,8 +132,8 @@ const Dashboard = () => {
 
     useEffect(() => {
       const obtenerEstado = async () => {
-        const estado = await verificarEstadoInscripcion(materia._id); // Llama al backend para obtener el estado de la solicitud
-        setEstadoInscripcion(estado); // Guarda el estado en el componente
+        const estado = await verificarEstadoInscripcion(materia._id);
+        setEstadoInscripcion(estado);
       };
 
       obtenerEstado();
@@ -148,7 +147,6 @@ const Dashboard = () => {
           <small>
             Profesor: {materia.professor?.name || "Sin profesor asignado"}
           </small>
-          {/* Mostrar el estado de la inscripción */}
           <div className="mt-2">
             {estadoInscripcion && (
               <span
@@ -167,20 +165,21 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        {/* Renderizar el botón solo si el estado no es "Rechazado" */}
-        {estadoInscripcion !== "Rechazado" && (
+        {estadoInscripcion === "Aceptado" ? (
+          <Link
+            to={`/materia/${materia._id}`}
+            className="btn btn-primary btn-sm"
+          >
+            Acceder a la materia
+          </Link>
+        ) : (
           <button
             className="btn btn-primary btn-sm"
-            disabled={
-              estadoInscripcion === "Pendiente" ||
-              estadoInscripcion === "Aceptado"
-            }
+            disabled={estadoInscripcion === "Pendiente"}
             onClick={() => handleInscripcion(materia._id)}
           >
             {estadoInscripcion === "Pendiente"
               ? "Solicitud Enviada"
-              : estadoInscripcion === "Aceptado"
-              ? "Inscripción Aprobada"
               : "Solicitar Inscripción"}
           </button>
         )}
@@ -190,7 +189,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {/* Menú lateral */}
       <aside className="sidebar">
         <h2 className="sidebar-title">Campus Virtual</h2>
         <nav className="sidebar-nav">
@@ -226,20 +224,13 @@ const Dashboard = () => {
         </nav>
       </aside>
 
-      {/* Contenido principal */}
       <main className="main-content">
         {activeSection === "home" && (
           <section>
-            <h1>
-              Bienvenido {userData ? userData.name : "Cargando..."} al Campus
-              Virtual
-            </h1>
-            <p>
-              Aquí puedes acceder a tus materiales, revisar tu perfil y
-              mantenerte al día con la información del seminario.
-            </p>
+            <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
           </section>
         )}
+
         {activeSection === "materias" && (
           <section>
             <h1>Materias Disponibles para Inscripción</h1>
@@ -254,23 +245,7 @@ const Dashboard = () => {
                 ))}
               </ul>
             ) : (
-              <p>
-                No hay materias disponibles para inscripción en este momento.
-              </p>
-            )}
-          </section>
-        )}
-        {activeSection === "profile" && (
-          <section>
-            <h1>Mi Perfil</h1>
-            {userData ? (
-              <ul>
-                <li>Nombre: {userData.name}</li>
-                <li>Email: {userData.email}</li>
-                <li>DNI: {userData.dni}</li>
-              </ul>
-            ) : (
-              <p>Cargando información del perfil...</p>
+              <p>No hay materias disponibles en este momento.</p>
             )}
           </section>
         )}
