@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import VideoPlayer from "../components/VideoPlayer";
 
 const MateriaDetalle = () => {
   const { id } = useParams(); // ID de la materia desde la URL
@@ -90,22 +91,16 @@ const MateriaDetalle = () => {
       {/* Videos Asociados */}
       <h2 className="mt-4">Videos</h2>
       {materia.videos.length > 0 ? (
-        <ul className="list-group">
+        <div className="row">
           {materia.videos.map((video, index) => (
-            <li
+            <div
               key={index}
-              className="list-group-item"
+              className="col-md-6"
             >
-              <a
-                href={video.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {video.title}
-              </a>
-            </li>
+              <VideoPlayer video={video} />
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
         <p>No hay videos disponibles.</p>
       )}
