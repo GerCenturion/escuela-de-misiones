@@ -20,6 +20,7 @@ import CreateMateria from "./pages/CreateMateria";
 import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
 import MateriaDetalle from "./pages/MateriaDetalle";
 import ExamenCompletar from "./pages/ExamenCompletar";
+import CorregirExamen from "./pages/CorregirExamen";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -70,6 +71,10 @@ const App = () => {
             <Route
               path="/examen/:examenId"
               element={<ExamenCompletar />}
+            />
+            <Route
+              path="/corregir/:examenId"
+              element={<CorregirExamen />}
             />
             <Route
               path="/professor-dashboard"

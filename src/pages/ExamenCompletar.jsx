@@ -71,7 +71,7 @@ const ExamenCompletar = () => {
       ...prev,
       [preguntaId]:
         tipo === "multiple-choice"
-          ? { opcionSeleccionada: valor }
+          ? { respuestaTexto: valor } // 📌 Guardamos el texto de la opción seleccionada
           : { respuestaTexto: valor },
     }));
   };
@@ -82,11 +82,22 @@ const ExamenCompletar = () => {
       return;
     }
 
+    // 📌 Validar que todas las respuestas están completas
+    const todasRespondidas = examen.preguntas.every(
+      (pregunta) =>
+        respuestas[pregunta._id] && respuestas[pregunta._id].respuestaTexto
+    );
+
+    if (!todasRespondidas) {
+      alert("Debes responder todas las preguntas antes de enviar.");
+      return;
+    }
+
     try {
       const formattedRespuestas = Object.entries(respuestas).map(
         ([preguntaId, respuesta]) => ({
           preguntaId,
-          ...respuesta, // Puede contener `respuestaTexto` o `opcionSeleccionada`
+          ...respuesta, // Contiene `respuestaTexto`
         })
       );
 
@@ -152,7 +163,7 @@ const ExamenCompletar = () => {
                         type="radio"
                         id={`opcion-${opcion._id}`}
                         name={`pregunta-${pregunta._id}`}
-                        value={opcion._id}
+                        value={opcion.texto} // 📌 Guardamos el texto de la opción seleccionada
                         className="form-check-input"
                         onChange={(e) =>
                           manejarCambio(
