@@ -66,10 +66,13 @@ const ExamenCompletar = () => {
     }
   }, [examenId, token]);
 
-  const manejarCambio = (preguntaId, respuestaTexto) => {
+  const manejarCambio = (preguntaId, valor, tipo) => {
     setRespuestas((prev) => ({
       ...prev,
-      [preguntaId]: respuestaTexto,
+      [preguntaId]:
+        tipo === "multiple-choice"
+          ? { opcionSeleccionada: valor }
+          : { respuestaTexto: valor },
     }));
   };
 
@@ -81,9 +84,9 @@ const ExamenCompletar = () => {
 
     try {
       const formattedRespuestas = Object.entries(respuestas).map(
-        ([preguntaId, respuestaTexto]) => ({
+        ([preguntaId, respuesta]) => ({
           preguntaId,
-          respuestaTexto,
+          ...respuesta, // Puede contener `respuestaTexto` o `opcionSeleccionada`
         })
       );
 
@@ -136,12 +139,49 @@ const ExamenCompletar = () => {
               className="mb-3"
             >
               <label className="form-label">{pregunta.texto}</label>
-              <input
-                type="text"
-                className="form-control"
-                value={respuestas[pregunta._id] || ""}
-                onChange={(e) => manejarCambio(pregunta._id, e.target.value)}
-              />
+
+              {pregunta.tipo === "multiple-choice" ? (
+                // 📌 Preguntas de opción múltiple
+                <div>
+                  {pregunta.opciones.map((opcion) => (
+                    <div
+                      key={opcion._id}
+                      className="form-check"
+                    >
+                      <input
+                        type="radio"
+                        id={`opcion-${opcion._id}`}
+                        name={`pregunta-${pregunta._id}`}
+                        value={opcion._id}
+                        className="form-check-input"
+                        onChange={(e) =>
+                          manejarCambio(
+                            pregunta._id,
+                            e.target.value,
+                            "multiple-choice"
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor={`opcion-${opcion._id}`}
+                        className="form-check-label"
+                      >
+                        {opcion.texto}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // 📌 Preguntas de desarrollo
+                <input
+                  type="text"
+                  className="form-control"
+                  value={respuestas[pregunta._id]?.respuestaTexto || ""}
+                  onChange={(e) =>
+                    manejarCambio(pregunta._id, e.target.value, "desarrollo")
+                  }
+                />
+              )}
             </div>
           ))}
 

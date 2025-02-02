@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 
 const ExamenForm = ({ materiaId, onClose }) => {
-  const [titulo, setTitulo] = useState(""); // Estado para el título
-  const [preguntas, setPreguntas] = useState([{ texto: "", puntuacion: "" }]);
+  const [titulo, setTitulo] = useState("");
+  const [preguntas, setPreguntas] = useState([
+    { texto: "", tipo: "desarrollo", opciones: [], puntuacion: "" },
+  ]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   const totalPuntos = preguntas.reduce(
-    (sum, pregunta) => sum + pregunta.puntuacion,
+    (sum, pregunta) => sum + (pregunta.puntuacion || 0),
     0
   );
 
@@ -17,7 +19,10 @@ const ExamenForm = ({ materiaId, onClose }) => {
       );
       return;
     }
-    setPreguntas([...preguntas, { texto: "", puntuacion: "" }]);
+    setPreguntas([
+      ...preguntas,
+      { texto: "", tipo: "desarrollo", opciones: [], puntuacion: 0 },
+    ]);
   };
 
   const actualizarPregunta = (index, campo, valor) => {
@@ -25,7 +30,7 @@ const ExamenForm = ({ materiaId, onClose }) => {
 
     if (campo === "puntuacion") {
       const nuevoTotal =
-        totalPuntos - nuevasPreguntas[index].puntuacion + Number(valor);
+        totalPuntos - (nuevasPreguntas[index].puntuacion || 0) + Number(valor);
       if (nuevoTotal > 10) {
         alert("La suma total de puntos no puede ser mayor que 10.");
         return;
@@ -37,8 +42,22 @@ const ExamenForm = ({ materiaId, onClose }) => {
     setPreguntas(nuevasPreguntas);
   };
 
-  const eliminarPregunta = (index) => {
-    const nuevasPreguntas = preguntas.filter((_, i) => i !== index);
+  const agregarOpcion = (index) => {
+    const nuevasPreguntas = [...preguntas];
+    nuevasPreguntas[index].opciones.push({ texto: "", puntuacion: 0 });
+    setPreguntas(nuevasPreguntas);
+  };
+
+  const actualizarOpcion = (pIndex, oIndex, campo, valor) => {
+    const nuevasPreguntas = [...preguntas];
+    nuevasPreguntas[pIndex].opciones[oIndex][campo] =
+      campo === "puntuacion" ? Number(valor) : valor;
+    setPreguntas(nuevasPreguntas);
+  };
+
+  const eliminarOpcion = (pIndex, oIndex) => {
+    const nuevasPreguntas = [...preguntas];
+    nuevasPreguntas[pIndex].opciones.splice(oIndex, 1);
     setPreguntas(nuevasPreguntas);
   };
 
@@ -66,9 +85,11 @@ const ExamenForm = ({ materiaId, onClose }) => {
       if (!response.ok) throw new Error("Error al crear el examen");
 
       alert("Examen creado con éxito");
-      setPreguntas([{ texto: "", puntuacion: 0 }]);
-      setTitulo(""); // Resetear título
-      onClose(); // Cerrar modal después de enviar
+      setPreguntas([
+        { texto: "", tipo: "desarrollo", opciones: [], puntuacion: 0 },
+      ]);
+      setTitulo("");
+      onClose();
     } catch (error) {
       console.error("Error:", error);
     }
@@ -83,14 +104,6 @@ const ExamenForm = ({ materiaId, onClose }) => {
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* <div className="modal-header">
-          <h5 className="modal-title">Crear Examen</h5>
-          <button
-            type="button"
-            className="btn-close"
-            onClick={onClose}
-          ></button>
-        </div> */}
         <div className="modal-body">
           <label>
             <strong>Título del Examen</strong>
@@ -121,6 +134,57 @@ const ExamenForm = ({ materiaId, onClose }) => {
                   actualizarPregunta(index, "texto", e.target.value)
                 }
               />
+              <label>Tipo de pregunta</label>
+              <select
+                className="form-control"
+                value={pregunta.tipo}
+                onChange={(e) =>
+                  actualizarPregunta(index, "tipo", e.target.value)
+                }
+              >
+                <option value="desarrollo">Desarrollo</option>
+                <option value="multiple-choice">Multiple Choice</option>
+              </select>
+
+              {pregunta.tipo === "multiple-choice" && (
+                <div>
+                  <h5>Opciones</h5>
+                  {pregunta.opciones.map((opcion, oIndex) => (
+                    <div
+                      key={oIndex}
+                      className="d-flex gap-2"
+                    >
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Texto de la opción"
+                        value={opcion.texto}
+                        onChange={(e) =>
+                          actualizarOpcion(
+                            index,
+                            oIndex,
+                            "texto",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => eliminarOpcion(index, oIndex)}
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="btn btn-secondary mt-2"
+                    onClick={() => agregarOpcion(index)}
+                  >
+                    Agregar Opción
+                  </button>
+                </div>
+              )}
+
               <label>Puntos</label>
               <input
                 type="number"
@@ -133,37 +197,22 @@ const ExamenForm = ({ materiaId, onClose }) => {
                   actualizarPregunta(index, "puntuacion", e.target.value)
                 }
               />
-              <button
-                className="btn btn-danger mt-2"
-                onClick={() => eliminarPregunta(index)}
-              >
-                Eliminar
-              </button>
             </div>
           ))}
         </div>
-        <div className="modal-footer">
-          <button
-            className="btn btn-primary me-2"
-            onClick={agregarPregunta}
-            disabled={totalPuntos >= 10}
-          >
-            Agregar Pregunta
-          </button>
-          <button
-            className="btn btn-success"
-            onClick={enviarExamen}
-            disabled={totalPuntos !== 10}
-          >
-            Enviar Examen
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={onClose}
-          >
-            Cerrar
-          </button>
-        </div>
+        <button
+          className="btn btn-primary me-2"
+          onClick={agregarPregunta}
+        >
+          Agregar Pregunta
+        </button>
+        <button
+          className="btn btn-success"
+          onClick={enviarExamen}
+          disabled={totalPuntos !== 10}
+        >
+          Enviar Examen
+        </button>
       </div>
     </div>
   );
