@@ -19,6 +19,7 @@ import EditMateria from "./pages/EditMateria";
 import CreateMateria from "./pages/CreateMateria";
 import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
 import MateriaDetalle from "./pages/MateriaDetalle";
+import ExamenCompletar from "./pages/ExamenCompletar";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -57,7 +58,6 @@ const App = () => {
               path="/login"
               element={<Login />}
             />
-
             {/* Rutas protegidas */}
             <Route
               path="/dashboard"
@@ -67,7 +67,10 @@ const App = () => {
                 </PrivateRoute>
               }
             />
-
+            <Route
+              path="/examen/:examenId"
+              element={<ExamenCompletar />}
+            />
             <Route
               path="/professor-dashboard"
               element={
@@ -76,7 +79,6 @@ const App = () => {
                 </ProfessorRoute>
               }
             />
-
             {/* Rutas protegidas para el administrador */}
             <Route
               path="/admin-dashboard"

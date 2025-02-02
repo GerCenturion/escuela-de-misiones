@@ -11,8 +11,13 @@ const MateriaDetalle = () => {
 
   useEffect(() => {
     const fetchMateria = async () => {
+      if (!id) {
+        setError("ID de la materia no válido.");
+        return;
+      }
+
       try {
-        const response = await fetch(`${API_URL}/materias/${id}`, {
+        const response = await fetch(`${API_URL}/materias/completo/${id}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -24,7 +29,7 @@ const MateriaDetalle = () => {
         const data = await response.json();
         setMateria(data);
       } catch (error) {
-        setError("Error al cargar la materia");
+        setError("Error al cargar la materia.");
         console.error(error);
       }
     };
@@ -32,9 +37,17 @@ const MateriaDetalle = () => {
     fetchMateria();
   }, [id, token]);
 
-  if (!materia) {
-    return <div>Cargando información de la materia...</div>;
+  if (error) {
+    return <div className="alert alert-danger">{error}</div>;
   }
+
+  if (!materia) {
+    return (
+      <div className="text-center">Cargando información de la materia...</div>
+    );
+  }
+  console.log("Materia obtenida:", materia);
+  console.log("Exámenes disponibles:", materia?.examenes);
 
   return (
     <div className="container mt-5">
@@ -99,17 +112,39 @@ const MateriaDetalle = () => {
 
       {/* Exámenes Disponibles */}
       <h2 className="mt-4">Exámenes</h2>
-      {materia.examenes.length > 0 ? (
+
+      {!materia ? (
+        <p>Cargando exámenes...</p>
+      ) : materia.examenes && materia.examenes.length > 0 ? (
         <ul className="list-group">
-          {materia.examenes.map((examen, index) => (
-            <li
-              key={index}
-              className="list-group-item"
-            >
-              <span>{examen.titulo || `Examen ${index + 1}`}</span>
-              <button className="btn btn-info btn-sm">Realizar Examen</button>
-            </li>
-          ))}
+          {materia.examenes
+            .filter((examen) => typeof examen === "object" && examen !== null) // 💡 Solo incluye objetos
+            .map((examen, index) => (
+              <li
+                key={examen._id} // Usa `_id` como clave
+                className="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <span>{examen.titulo || `Examen ${index + 1}`}</span>
+                <button
+                  className="btn btn-info btn-sm"
+                  onClick={() => {
+                    if (!examen._id) {
+                      console.error(
+                        "Error: ID del examen no encontrado",
+                        examen
+                      );
+                      alert("ID del examen no válido");
+                      return;
+                    }
+
+                    console.log("Navegando al examen con ID:", examen._id);
+                    navigate(`/examen/${examen._id}`);
+                  }}
+                >
+                  Realizar Examen
+                </button>
+              </li>
+            ))}
         </ul>
       ) : (
         <p>No hay exámenes disponibles.</p>
