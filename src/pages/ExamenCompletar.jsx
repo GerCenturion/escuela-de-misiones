@@ -6,20 +6,38 @@ const ExamenCompletar = () => {
   const [examen, setExamen] = useState(null);
   const [respuestas, setRespuestas] = useState({});
   const [loading, setLoading] = useState(true);
+  const [yaRespondido, setYaRespondido] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchExamen = async () => {
-      if (!examenId) {
-        console.error("❌ Error: `examenId` no válido.");
-        return;
-      }
-
-      console.log("🟢 Solicitando examen con ID:", examenId);
-
+    const verificarSiYaRespondio = async () => {
       try {
+        console.log("🔍 Verificando si el alumno ya completó el examen...");
+        const response = await fetch(
+          `${API_URL}/examenes/${examenId}/completado`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("No se pudo verificar el estado del examen");
+        }
+
+        const data = await response.json();
+        console.log("🟢 Estado del examen:", data);
+        setYaRespondido(data.yaRespondido);
+      } catch (error) {
+        console.error("❌ Error al verificar el examen:", error);
+      }
+    };
+
+    const fetchExamen = async () => {
+      try {
+        console.log("🟢 Solicitando examen con ID:", examenId);
         const response = await fetch(
           `${API_URL}/examenes/examenes/${examenId}`,
           {
@@ -34,16 +52,18 @@ const ExamenCompletar = () => {
 
         const data = await response.json();
         console.log("🟢 Examen obtenido:", data);
-
         setExamen(data);
-        setLoading(false);
       } catch (error) {
         console.error("❌ Error al obtener el examen:", error);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchExamen();
+    if (examenId) {
+      verificarSiYaRespondio();
+      fetchExamen();
+    }
   }, [examenId, token]);
 
   const manejarCambio = (preguntaId, respuestaTexto) => {
@@ -54,8 +74,8 @@ const ExamenCompletar = () => {
   };
 
   const enviarRespuestas = async () => {
-    if (!examen) {
-      alert("No se ha cargado el examen correctamente.");
+    if (!examen || yaRespondido) {
+      alert("No puedes responder este examen nuevamente.");
       return;
     }
 
@@ -104,30 +124,36 @@ const ExamenCompletar = () => {
       <h2>{examen.titulo}</h2>
       <p>Materia: {examen.materia?.name || "No especificada"}</p>
 
-      <form>
-        {examen.preguntas.map((pregunta) => (
-          <div
-            key={pregunta._id}
-            className="mb-3"
-          >
-            <label className="form-label">{pregunta.texto}</label>
-            <input
-              type="text"
-              className="form-control"
-              value={respuestas[pregunta._id] || ""}
-              onChange={(e) => manejarCambio(pregunta._id, e.target.value)}
-            />
-          </div>
-        ))}
+      {yaRespondido ? (
+        <div className="alert alert-info">
+          Ya has completado este examen. No puedes volver a responderlo.
+        </div>
+      ) : (
+        <form>
+          {examen.preguntas.map((pregunta) => (
+            <div
+              key={pregunta._id}
+              className="mb-3"
+            >
+              <label className="form-label">{pregunta.texto}</label>
+              <input
+                type="text"
+                className="form-control"
+                value={respuestas[pregunta._id] || ""}
+                onChange={(e) => manejarCambio(pregunta._id, e.target.value)}
+              />
+            </div>
+          ))}
 
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={enviarRespuestas}
-        >
-          Enviar Respuestas
-        </button>
-      </form>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={enviarRespuestas}
+          >
+            Enviar Respuestas
+          </button>
+        </form>
+      )}
     </div>
   );
 };
