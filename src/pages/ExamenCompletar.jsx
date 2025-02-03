@@ -133,6 +133,25 @@ const ExamenCompletar = () => {
     return <p>Error al cargar el examen. Verifica la consola.</p>;
   }
 
+  // Extraer información de la corrección si existe
+  const respuestaAlumno = examen.respuestas?.[0] || {};
+  const estaCorregido = respuestaAlumno.corregido || false;
+  const totalPuntuacion = respuestaAlumno.totalPuntuacion ?? "Pendiente";
+
+  // Determinar el estado del examen
+  let mensajeNota = "🕒 Esperando corrección...";
+  let colorTexto = "text-primary"; // Azul para corrección pendiente
+
+  if (estaCorregido) {
+    if (totalPuntuacion > 5) {
+      mensajeNota = `✅ Tu nota es: ${totalPuntuacion}`;
+      colorTexto = "text-success"; // Verde si aprobó
+    } else {
+      mensajeNota = `❌ Tu nota es: ${totalPuntuacion}`;
+      colorTexto = "text-danger"; // Rojo si desaprobó
+    }
+  }
+
   return (
     <div className="container mt-4">
       <h2>{examen.titulo}</h2>
@@ -140,7 +159,8 @@ const ExamenCompletar = () => {
 
       {yaRespondido ? (
         <div className="alert alert-info">
-          Ya has completado este examen. No puedes volver a responderlo.
+          <p>Ya has completado este examen. No puedes volver a responderlo.</p>
+          <h4 className={colorTexto}>{mensajeNota}</h4>
         </div>
       ) : (
         <form>
@@ -154,7 +174,6 @@ const ExamenCompletar = () => {
                 <strong>(Puntos: {pregunta.puntuacion})</strong>
               </label>
               {pregunta.tipo === "multiple-choice" ? (
-                // 📌 Preguntas de opción múltiple
                 <div>
                   {pregunta.opciones.map((opcion) => (
                     <div
@@ -165,7 +184,7 @@ const ExamenCompletar = () => {
                         type="radio"
                         id={`opcion-${opcion._id}`}
                         name={`pregunta-${pregunta._id}`}
-                        value={opcion.texto} // 📌 Guardamos el texto de la opción seleccionada
+                        value={opcion.texto}
                         className="form-check-input"
                         onChange={(e) =>
                           manejarCambio(
@@ -185,7 +204,6 @@ const ExamenCompletar = () => {
                   ))}
                 </div>
               ) : (
-                // 📌 Preguntas de desarrollo
                 <input
                   type="text"
                   className="form-control"
