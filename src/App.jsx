@@ -28,108 +28,141 @@ const App = () => {
   return (
     <Router>
       <div className="app">
-        <Header />
-        <main>
-          <Routes>
-            {/* Rutas públicas */}
-            <Route
-              path="/materia/:id"
-              element={<MateriaDetalle />}
-            />
-            <Route
-              path="/"
-              element={<Home />}
-            />
-            <Route
-              path="/about"
-              element={<About />}
-            />
-            <Route
-              path="/program"
-              element={<Program />}
-            />
-            <Route
-              path="/registration"
-              element={<Registration />}
-            />
-            <Route
-              path="/contact"
-              element={<Contact />}
-            />
-            <Route
-              path="/login"
-              element={<Login />}
-            />
-            {/* Rutas protegidas */}
-            <Route
-              path="/dashboard"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/examen/:examenId"
-              element={<ExamenCompletar />}
-            />
-            <Route
-              path="/corregir/:examenId"
-              element={<CorregirExamen />}
-            />
+        {/* Rutas con Header y Footer */}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <Header />
+                <Home />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <>
+                <Header />
+                <About />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/program"
+            element={
+              <>
+                <Header />
+                <Program />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/registration"
+            element={
+              <>
+                <Header />
+                <Registration />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <>
+                <Header />
+                <Contact />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <>
+                <Header />
+                <Login />
+                <Footer />
+              </>
+            }
+          />
 
-            <Route
-              path="/revisar-examen/:examenId"
-              element={<ExamenRevisar />}
-            />
-            <Route
-              path="/professor-dashboard"
-              element={
-                <ProfessorRoute>
-                  <ProfessorDashboard />
-                </ProfessorRoute>
-              }
-            />
-            {/* Rutas protegidas para el administrador */}
-            <Route
-              path="/admin-dashboard"
-              element={
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/edit/:id"
-              element={
-                <AdminRoute>
-                  <EditUser />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/materias/edit/:id"
-              element={
-                <AdminRoute>
-                  <EditMateria />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/materias/create"
-              element={<CreateMateria />}
-            />
-            <Route
-              path="/professor/materias/:id"
-              element={
-                <ProfessorRoute>
-                  <ProfessorMateriaPage />
-                </ProfessorRoute>
-              }
-            />
-          </Routes>
-        </main>
-        <Footer />
+          {/* Rutas sin Header ni Footer */}
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/professor-dashboard"
+            element={
+              <ProfessorRoute>
+                <ProfessorDashboard />
+              </ProfessorRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+
+          {/* Otras rutas */}
+          <Route
+            path="/materia/:id"
+            element={<MateriaDetalle />}
+          />
+          <Route
+            path="/examen/:examenId"
+            element={<ExamenCompletar />}
+          />
+          <Route
+            path="/corregir/:examenId"
+            element={<CorregirExamen />}
+          />
+          <Route
+            path="/revisar-examen/:examenId"
+            element={<ExamenRevisar />}
+          />
+          <Route
+            path="/admin/edit/:id"
+            element={
+              <AdminRoute>
+                <EditUser />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/materias/edit/:id"
+            element={
+              <AdminRoute>
+                <EditMateria />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/materias/create"
+            element={<CreateMateria />}
+          />
+          <Route
+            path="/professor/materias/:id"
+            element={
+              <ProfessorRoute>
+                <ProfessorMateriaPage />
+              </ProfessorRoute>
+            }
+          />
+        </Routes>
         <WhatsAppButton />
       </div>
     </Router>

@@ -1,14 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Perfil from "../components/Perfil";
+import "../Dashboard.css";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("home");
   const [userData, setUserData] = useState(null);
   const [availableMaterias, setAvailableMaterias] = useState([]);
+  const [inscriptionStatus, setInscriptionStatus] = useState({});
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [error, setError] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSidebarOpen(window.innerWidth > 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -21,9 +34,7 @@ const Dashboard = () => {
       try {
         const response = await fetch(`${API_URL}/usuarios/me`, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
@@ -46,9 +57,7 @@ const Dashboard = () => {
       try {
         const response = await fetch(`${API_URL}/materias`, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
@@ -60,39 +69,44 @@ const Dashboard = () => {
           (materia) => materia.isEnrollmentOpen
         );
         setAvailableMaterias(filteredMaterias);
+
+        // Verificar estado de inscripción de todas las materias
+        filteredMaterias.forEach((materia) =>
+          fetchInscriptionStatus(materia._id)
+        );
       } catch (error) {
         setError("Error al cargar las materias disponibles");
         console.error(error);
       }
     };
 
+    const fetchInscriptionStatus = async (materiaId) => {
+      try {
+        const response = await fetch(
+          `${API_URL}/materias/${materiaId}/estado-inscripcion`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error al verificar inscripción para ${materiaId}`);
+        }
+
+        const data = await response.json();
+        setInscriptionStatus((prev) => ({
+          ...prev,
+          [materiaId]: data.status, // Guardar estado de inscripción
+        }));
+      } catch (error) {
+        console.error("Error al obtener estado de inscripción:", error);
+      }
+    };
+
     fetchUserData();
     fetchAvailableMaterias();
   }, [token]);
-
-  const verificarEstadoInscripcion = async (materiaId) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/materias/${materiaId}/estado-inscripcion`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al verificar estado de inscripción");
-      }
-
-      const data = await response.json();
-      return data.status;
-    } catch (error) {
-      console.error("Error al verificar estado de inscripción:", error.message);
-      return null;
-    }
-  };
 
   const handleInscripcion = async (materiaId) => {
     try {
@@ -114,67 +128,47 @@ const Dashboard = () => {
       const data = await response.json();
       alert(data.message);
 
-      setAvailableMaterias((prevMaterias) =>
-        prevMaterias.map((materia) =>
-          materia._id === materiaId
-            ? { ...materia, inscripcionStatus: "Pendiente" }
-            : materia
-        )
-      );
+      setInscriptionStatus((prev) => ({
+        ...prev,
+        [materiaId]: "Pendiente",
+      }));
     } catch (error) {
-      console.error("Error al solicitar inscripción:", error.message);
+      console.error("Error al solicitar inscripción:", error);
       alert("Error al solicitar inscripción");
     }
   };
 
   const MateriaItem = ({ materia }) => {
-    const [estadoInscripcion, setEstadoInscripcion] = useState(null);
-
-    useEffect(() => {
-      const obtenerEstado = async () => {
-        const estado = await verificarEstadoInscripcion(materia._id);
-        setEstadoInscripcion(estado);
-      };
-
-      obtenerEstado();
-    }, [materia._id]);
+    const estadoInscripcion = inscriptionStatus[materia._id] || "No Inscrito";
 
     return (
-      <li className="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <h5>{materia.name}</h5>
-          <p>{materia.level}</p>
-          <small>
-            Profesor: {materia.professor?.name || "Sin profesor asignado"}
-          </small>
-          <div className="mt-2">
-            {estadoInscripcion && (
-              <span
-                className={`badge ${
-                  estadoInscripcion === "Pendiente"
-                    ? "bg-warning text-dark"
-                    : estadoInscripcion === "Aceptado"
-                    ? "bg-success"
-                    : estadoInscripcion === "Rechazado"
-                    ? "bg-danger"
-                    : "bg-secondary"
-                }`}
-              >
-                {estadoInscripcion}
-              </span>
-            )}
-          </div>
+      <div className="materia-card">
+        <h3>{materia.name}</h3>
+        <p>{materia.level}</p>
+        <p>Profesor: {materia.professor?.name || "Sin profesor asignado"}</p>
+
+        <div className="inscription-status">
+          {estadoInscripcion === "Pendiente" && (
+            <span className="badge bg-warning">Pendiente</span>
+          )}
+          {estadoInscripcion === "Aceptado" && (
+            <span className="badge bg-success">Aceptado</span>
+          )}
+          {estadoInscripcion === "Rechazado" && (
+            <span className="badge bg-danger">Rechazado</span>
+          )}
         </div>
+
         {estadoInscripcion === "Aceptado" ? (
           <Link
             to={`/materia/${materia._id}`}
-            className="btn btn-primary btn-sm"
+            className="btn-materia"
           >
-            Acceder a la materia
+            Acceder
           </Link>
         ) : (
           <button
-            className="btn btn-primary btn-sm"
+            className="btn-materia"
             disabled={estadoInscripcion === "Pendiente"}
             onClick={() => handleInscripcion(materia._id)}
           >
@@ -183,15 +177,22 @@ const Dashboard = () => {
               : "Solicitar Inscripción"}
           </button>
         )}
-      </li>
+      </div>
     );
   };
 
   return (
     <div className="dashboard-container">
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
+        {/* Botón para mostrar/ocultar el sidebar en móviles */}
+        <button
+          className="sidebar-toggle"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          {isSidebarOpen ? "<<" : ">>"}
+        </button>
         <h2 className="sidebar-title">Campus Virtual</h2>
-        <nav className="sidebar-nav">
+        <nav>
           <ul>
             <li>
               <button
@@ -206,7 +207,7 @@ const Dashboard = () => {
                 className={activeSection === "materias" ? "active" : ""}
                 onClick={() => setActiveSection("materias")}
               >
-                Materias Disponibles
+                Materias
               </button>
             </li>
             <li>
@@ -226,28 +227,30 @@ const Dashboard = () => {
 
       <main className="main-content">
         {activeSection === "home" && (
-          <section>
-            <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
-          </section>
+          <h1>Bienvenido, {userData ? userData.name : "Cargando..."}</h1>
         )}
 
         {activeSection === "materias" && (
           <section>
-            <h1>Materias Disponibles para Inscripción</h1>
+            <h1>Materias Disponibles</h1>
             {error && <div className="alert alert-danger">{error}</div>}
-            {availableMaterias.length > 0 ? (
-              <ul className="list-group">
-                {availableMaterias.map((materia) => (
-                  <MateriaItem
-                    key={materia._id}
-                    materia={materia}
-                  />
-                ))}
-              </ul>
-            ) : (
-              <p>No hay materias disponibles en este momento.</p>
-            )}
+            <div className="materias-container">
+              {availableMaterias.map((materia) => (
+                <MateriaItem
+                  key={materia._id}
+                  materia={materia}
+                />
+              ))}
+            </div>
           </section>
+        )}
+
+        {activeSection === "profile" && (
+          <Perfil
+            userData={userData}
+            API_URL={API_URL}
+            token={token}
+          />
         )}
       </main>
     </div>

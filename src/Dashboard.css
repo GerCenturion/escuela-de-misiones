@@ -72,4 +72,117 @@
   main ul {
     font-size: 1rem;
   }
-  
+  /* ✅ Estilos mejorados con Glassmorphism y diseño moderno */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Arial", sans-serif;
+  background: #f4f4f9;
+  overflow-x: hidden;
+}
+
+.dashboard-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar con efecto Glassmorphism */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  background: rgba(44, 62, 80, 0.8);
+  backdrop-filter: blur(8px);
+  color: white;
+  top: 0;
+  left: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin-bottom: 15px;
+}
+
+.sidebar ul li button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.sidebar ul li button.active,
+.sidebar ul li button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.main-content {
+  margin-left: 270px;
+  padding: 20px;
+  width: calc(100vw - 270px);
+  overflow-y: auto;
+}
+
+/* Materias - Diseño Moderno */
+.materias-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.materia-card {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.materia-card:hover {
+  transform: translateY(-5px);
+}
+
+.btn-materia {
+  background: #2980b9;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-materia:hover {
+  background: #3498db;
+}
