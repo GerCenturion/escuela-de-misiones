@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { FaPen, FaCheck } from "react-icons/fa"; // Ícono de lápiz
 
 const Perfil = () => {
   const [userData, setUserData] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
 
@@ -32,6 +34,8 @@ const Perfil = () => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
+    if (!file) return;
 
     // Validar tipo de archivo
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
@@ -97,6 +101,7 @@ const Perfil = () => {
       const data = await response.json();
       if (response.ok) {
         setUserData((prev) => ({ ...prev, profileImage: data.imageUrl }));
+        setSelectedFile(null); // Ocultar el botón después de subir la foto
       } else {
         console.error(data.message);
         setError("Error al subir la foto.");
@@ -108,35 +113,47 @@ const Perfil = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="perfil-container">
       <h1>Perfil de Usuario</h1>
       {userData && (
-        <div>
-          <img
-            src={previewImage || userData.profileImage || "/default-avatar.png"}
-            alt="Foto de perfil"
-            className="profile-picture"
-            style={{
-              width: "150px",
-              height: "150px",
-              borderRadius: "50%",
-              objectFit: "cover", // Asegura que la imagen se recorte sin distorsión
-              objectPosition: "center", // Centra la imagen correctamente
-            }}
-          />
+        <div className="profile-wrapper">
+          <div className="profile-image-container">
+            <img
+              src={
+                previewImage || userData.profileImage || "/default-avatar.png"
+              }
+              alt="Foto de perfil"
+              className="profile-picture"
+            />
+            {/* Icono de lápiz para editar */}
+            <div
+              className="edit-icon"
+              onClick={() => fileInputRef.current.click()} // Al hacer clic, se activa el input oculto
+            >
+              <FaPen />
+            </div>
+          </div>
+
+          {/* Input oculto */}
           <input
             type="file"
             accept="image/jpeg, image/png"
+            ref={fileInputRef}
+            style={{ display: "none" }}
             onChange={handleFileChange}
           />
+
           {error && <p className="text-danger">{error}</p>}
-          <button
-            className="btn btn-primary mt-2"
-            onClick={handleUpload}
-            disabled={!selectedFile}
-          >
-            Subir Foto
-          </button>
+
+          {/* Mostrar botón solo si hay una imagen seleccionada */}
+          {selectedFile && (
+            <button
+              // className="btn btn-primary mt-2"
+              onClick={handleUpload}
+            >
+              <FaCheck />
+            </button>
+          )}
         </div>
       )}
     </div>
