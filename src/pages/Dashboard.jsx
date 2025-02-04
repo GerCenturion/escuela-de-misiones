@@ -8,8 +8,8 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [availableMaterias, setAvailableMaterias] = useState([]);
   const [inscriptionStatus, setInscriptionStatus] = useState({});
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [error, setError] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
@@ -183,21 +183,25 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* Menú hamburguesa en pantallas pequeñas */}
+      <button
+        className="menu-hamburguesa"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        ☰
+      </button>
+
+      {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
-        {/* Botón para mostrar/ocultar el sidebar en móviles */}
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        >
-          {isSidebarOpen ? "<<" : ">>"}
-        </button>
         <h2 className="sidebar-title">Campus Virtual</h2>
-        <nav>
+        <nav className="sidebar-nav">
           <ul>
             <li>
               <button
                 className={activeSection === "home" ? "active" : ""}
-                onClick={() => setActiveSection("home")}
+                onClick={() => {
+                  setActiveSection("home");
+                }}
               >
                 Inicio
               </button>
@@ -225,9 +229,12 @@ const Dashboard = () => {
         </nav>
       </aside>
 
+      {/* Contenido principal */}
       <main className="main-content">
         {activeSection === "home" && (
-          <h1>Bienvenido, {userData ? userData.name : "Cargando..."}</h1>
+          <section>
+            <h1> Bienvenido {userData ? userData.name : "Cargando..."}</h1>
+          </section>
         )}
 
         {activeSection === "materias" && (
