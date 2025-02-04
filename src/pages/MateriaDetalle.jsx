@@ -177,10 +177,11 @@ const MateriaDetalle = () => {
 
               if (estado.corregido) {
                 estadoTexto = `Nota: ${nota} / 10`;
-                estadoClase = nota > 5 ? "badge bg-success" : "badge bg-danger";
+                estadoClase =
+                  nota > 5 ? "btn btn-success btn-sm" : "btn btn-danger btn-sm";
               } else {
                 estadoTexto = "🕒 Esperando corrección...";
-                estadoClase = "badge bg-warning text-dark";
+                estadoClase = "btn btn-warning btn-sm text-dark";
               }
             }
 
@@ -191,8 +192,17 @@ const MateriaDetalle = () => {
               >
                 <span>{examen.titulo}</span>
 
-                {/* Estado del examen */}
-                <span className={estadoClase}>{estadoTexto}</span>
+                {/* Botón para ver el examen enviado */}
+                {estado?.completado ? (
+                  <button
+                    className={estadoClase}
+                    onClick={() => navigate(`/revisar-examen/${examen._id}`)}
+                  >
+                    {estadoTexto}
+                  </button>
+                ) : (
+                  <span className={estadoClase}>{estadoTexto}</span>
+                )}
 
                 {/* Mostrar botón solo si el examen no ha sido realizado */}
                 {mostrarBoton && (

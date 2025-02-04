@@ -21,6 +21,7 @@ import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
 import MateriaDetalle from "./pages/MateriaDetalle";
 import ExamenCompletar from "./pages/ExamenCompletar";
 import CorregirExamen from "./pages/CorregirExamen";
+import ExamenRevisar from "./components/ExamenRevisar";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -75,6 +76,11 @@ const App = () => {
             <Route
               path="/corregir/:examenId"
               element={<CorregirExamen />}
+            />
+
+            <Route
+              path="/revisar-examen/:examenId"
+              element={<ExamenRevisar />}
             />
             <Route
               path="/professor-dashboard"
