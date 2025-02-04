@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaPen, FaCheck } from "react-icons/fa"; // Ícono de lápiz
+import { FaPen, FaCheck, FaTimes } from "react-icons/fa"; // Íconos para edición
+import "../App.css"; // Archivo de estilos
 
-const Perfil = () => {
+const Perfil = ({ API_URL, token }) => {
   const [userData, setUserData] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -26,22 +25,21 @@ const Perfil = () => {
         setUserData(data);
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
+        setError("Error al obtener la información personal.");
       }
     };
 
     fetchUserData();
-  }, [token]);
+  }, [API_URL, token]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
-
     if (!file) return;
 
     // Validar tipo de archivo
     const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
       setError("Solo se permiten archivos JPG y PNG.");
-      setSelectedFile(null);
       return;
     }
 
@@ -59,7 +57,7 @@ const Perfil = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
-        // Asegurar recorte centrado
+        // Recorte centrado
         const minSize = Math.min(img.width, img.height);
         const offsetX = (img.width - minSize) / 2;
         const offsetY = (img.height - minSize) / 2;
@@ -102,6 +100,7 @@ const Perfil = () => {
       if (response.ok) {
         setUserData((prev) => ({ ...prev, profileImage: data.imageUrl }));
         setSelectedFile(null); // Ocultar el botón después de subir la foto
+        setPreviewImage(null);
       } else {
         console.error(data.message);
         setError("Error al subir la foto.");
@@ -125,16 +124,14 @@ const Perfil = () => {
               alt="Foto de perfil"
               className="profile-picture"
             />
-            {/* Icono de lápiz para editar */}
             <div
               className="edit-icon"
-              onClick={() => fileInputRef.current.click()} // Al hacer clic, se activa el input oculto
+              onClick={() => fileInputRef.current.click()}
             >
               <FaPen />
             </div>
           </div>
 
-          {/* Input oculto */}
           <input
             type="file"
             accept="image/jpeg, image/png"
@@ -145,17 +142,84 @@ const Perfil = () => {
 
           {error && <p className="text-danger">{error}</p>}
 
-          {/* Mostrar botón solo si hay una imagen seleccionada */}
+          {/* Botones solo si hay una imagen seleccionada */}
           {selectedFile && (
-            <button
-              // className="btn btn-primary mt-2"
-              onClick={handleUpload}
-            >
-              <FaCheck />
-            </button>
+            <div className="upload-buttons">
+              <button
+                className="upload-confirm"
+                onClick={handleUpload}
+              >
+                <FaCheck />
+              </button>
+              <button
+                className="upload-cancel"
+                onClick={() => setSelectedFile(null)}
+              >
+                <FaTimes />
+              </button>
+            </div>
           )}
         </div>
       )}
+
+      {/* Información personal */}
+      <div className="info-card">
+        <h3>Datos Personales</h3>
+        <p>
+          <strong>Nombre:</strong> {userData?.name}
+        </p>
+        <p>
+          <strong>Email:</strong> {userData?.email}
+        </p>
+        <p>
+          <strong>Fecha de Nacimiento:</strong>{" "}
+          {new Date(userData?.birthdate).toLocaleDateString()}
+        </p>
+        <p>
+          <strong>DNI:</strong> {userData?.dni}
+        </p>
+        <p>
+          <strong>Dirección:</strong> {userData?.address}
+        </p>
+      </div>
+
+      <div className="info-card">
+        <h3>Contacto</h3>
+        <p>
+          <strong>Teléfono:</strong> (+{userData?.phoneCode}){" "}
+          {userData?.phoneArea}-{userData?.phoneNumber}
+        </p>
+        <p>
+          <strong>Tipo de Teléfono:</strong> {userData?.phoneType}
+        </p>
+      </div>
+
+      <div className="info-card">
+        <h3>Datos Religiosos</h3>
+        <p>
+          <strong>Iglesia:</strong> {userData?.church}
+        </p>
+        <p>
+          <strong>Rol Ministerial:</strong>{" "}
+          {userData?.ministerialRole || "No asignado"}
+        </p>
+        <p>
+          <strong>Motivo de Inscripción:</strong> {userData?.reason}
+        </p>
+      </div>
+
+      <div className="info-card">
+        <h3>Otros</h3>
+        <p>
+          <strong>Estado Civil:</strong> {userData?.civilStatus}
+        </p>
+        <p>
+          <strong>Profesión:</strong> {userData?.profession}
+        </p>
+        <p>
+          <strong>Rol en la Plataforma:</strong> {userData?.role}
+        </p>
+      </div>
     </div>
   );
 };
