@@ -199,7 +199,7 @@ const Dashboard = () => {
 
       {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
-        <h2 className="sidebar-title">Campus Virtual</h2>
+        <h2 className="sidebar-title">Escuela de Misiones</h2>
         <nav className="sidebar-nav">
           <ul>
             <li>
@@ -242,7 +242,6 @@ const Dashboard = () => {
             <h1> Bienvenido {userData ? userData.name : "Cargando..."}</h1>
           </section>
         )}
-
         {activeSection === "materias" && (
           <section>
             <h1>Materias Disponibles</h1>
@@ -257,7 +256,6 @@ const Dashboard = () => {
             </div>
           </section>
         )}
-
         {activeSection === "profile" && (
           <Perfil
             userData={userData}
@@ -265,6 +263,62 @@ const Dashboard = () => {
             token={token}
           />
         )}
+        {/* Sidebar */}
+        <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
+          <h2 className="sidebar-title">Escuela de Misiones</h2>
+          <nav className="sidebar-nav">
+            <ul>
+              <li>
+                <button
+                  className={activeSection === "home" ? "active" : ""}
+                  onClick={() => {
+                    setActiveSection("home");
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  Inicio
+                </button>
+              </li>
+              <li>
+                <button
+                  className={activeSection === "materias" ? "active" : ""}
+                  onClick={() => {
+                    setActiveSection("materias");
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  Materias
+                </button>
+              </li>
+              <li>
+                <button
+                  className={activeSection === "profile" ? "active" : ""}
+                  onClick={() => {
+                    setActiveSection("profile");
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  Perfil
+                </button>
+              </li>
+              <li>
+                <Link to="/">Cerrar Sesión</Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* Barra de navegación inmediatamente debajo del sidebar */}
+          <nav className>
+            <div className="container">
+              {/* Logo con imagen */}
+              <img
+                src="/logo.png"
+                alt="Escuela de Misiones"
+                style={{ height: "150px", marginRight: "5px" }}
+              />
+            </div>
+          </nav>
+        </aside>
       </main>
     </div>
   );

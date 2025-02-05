@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaPen, FaCheck, FaTimes, FaLock } from "react-icons/fa"; // Íconos para edición
-import "../App.css"; // Archivo de estilos
+import { FaPen, FaCheck, FaTimes, FaLock } from "react-icons/fa";
+import "../App.css";
 
 const Perfil = ({ API_URL, token }) => {
   const [userData, setUserData] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [originalImage, setOriginalImage] = useState(null);
   const [error, setError] = useState("");
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -29,12 +30,13 @@ const Perfil = ({ API_URL, token }) => {
 
         const data = await response.json();
         setUserData(data);
+        setOriginalImage(data.profileImage || "/default-avatar.png"); // Guarda la imagen original
+        setPreviewImage(data.profileImage || "/default-avatar.png");
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
         setError("Error al obtener la información personal.");
       }
     };
-
     fetchUserData();
   }, [API_URL, token]);
 
@@ -105,8 +107,9 @@ const Perfil = ({ API_URL, token }) => {
       const data = await response.json();
       if (response.ok) {
         setUserData((prev) => ({ ...prev, profileImage: data.imageUrl }));
+        setOriginalImage(data.imageUrl); // Actualizar la imagen original
         setSelectedFile(null); // Ocultar el botón después de subir la foto
-        setPreviewImage(null);
+        setPreviewImage(data.imageUrl);
       } else {
         console.error(data.message);
         setError("Error al subir la foto.");
@@ -116,6 +119,12 @@ const Perfil = ({ API_URL, token }) => {
       setError("Error interno del servidor.");
     }
   };
+
+  const handleCancelUpload = () => {
+    setSelectedFile(null);
+    setPreviewImage(originalImage); // Restaurar la imagen original
+  };
+
   const handleChangePassword = async () => {
     setPasswordError(""); // Limpiar errores previos
     setPasswordSuccess(""); // Limpiar mensajes previos
@@ -168,9 +177,7 @@ const Perfil = ({ API_URL, token }) => {
         <div className="profile-wrapper">
           <div className="profile-image-container">
             <img
-              src={
-                previewImage || userData.profileImage || "/default-avatar.png"
-              }
+              src={previewImage}
               alt="Foto de perfil"
               className="profile-picture"
             />
@@ -203,7 +210,7 @@ const Perfil = ({ API_URL, token }) => {
               </button>
               <button
                 className="upload-cancel"
-                onClick={() => setSelectedFile(null)}
+                onClick={handleCancelUpload} // Nueva función para cancelar y restaurar la imagen previa
               >
                 <FaTimes />
               </button>
