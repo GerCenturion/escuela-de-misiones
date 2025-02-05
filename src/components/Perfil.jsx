@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaPen, FaCheck, FaTimes } from "react-icons/fa"; // Íconos para edición
+import { FaPen, FaCheck, FaTimes, FaLock } from "react-icons/fa"; // Íconos para edición
 import "../App.css"; // Archivo de estilos
 
 const Perfil = ({ API_URL, token }) => {
@@ -7,6 +7,12 @@ const Perfil = ({ API_URL, token }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState("");
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -108,6 +114,50 @@ const Perfil = ({ API_URL, token }) => {
     } catch (error) {
       console.error("Error al subir la foto:", error);
       setError("Error interno del servidor.");
+    }
+  };
+  const handleChangePassword = async () => {
+    setPasswordError(""); // Limpiar errores previos
+    setPasswordSuccess(""); // Limpiar mensajes previos
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Todos los campos son obligatorios.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/usuarios/cambiar-contrasena`, {
+        method: "PUT", // Debe ser PUT, no POST
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error al cambiar la contraseña.");
+      }
+
+      // Éxito: actualizar UI y limpiar campos
+      setPasswordSuccess("Contraseña cambiada con éxito.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      setPasswordError(error.message || "Error interno del servidor.");
     }
   };
 
@@ -220,6 +270,43 @@ const Perfil = ({ API_URL, token }) => {
           <strong>Rol en la Plataforma:</strong> {userData?.role}
         </p>
       </div>
+      <button
+        className="password-toggle"
+        onClick={() => setShowPasswordForm(!showPasswordForm)}
+      >
+        <FaLock /> Cambiar Contraseña
+      </button>
+
+      {showPasswordForm && (
+        <div className="password-form">
+          <input
+            type="password"
+            placeholder="Contraseña actual"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Nueva contraseña"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Confirmar nueva contraseña"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          {passwordError && <p className="text-danger">{passwordError}</p>}
+          {passwordSuccess && <p className="text-success">{passwordSuccess}</p>}
+          <button
+            className="btn-password-change"
+            onClick={handleChangePassword}
+          >
+            Confirmar Cambio
+          </button>
+        </div>
+      )}
     </div>
   );
 };

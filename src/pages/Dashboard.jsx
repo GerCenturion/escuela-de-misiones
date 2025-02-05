@@ -143,40 +143,46 @@ const Dashboard = () => {
 
     return (
       <div className="materia-card">
-        <h3>{materia.name}</h3>
-        <p>{materia.level}</p>
-        <p>Profesor: {materia.professor?.name || "Sin profesor asignado"}</p>
+        <h3 className="materia-title">{materia.name}</h3>
+        <p className="materia-level">{materia.level}</p>
+        <p className="materia-profesor">
+          Profesor: {materia.professor?.name || "Sin profesor asignado"}
+        </p>
 
+        {/* Estado de inscripción con espaciado */}
         <div className="inscription-status">
           {estadoInscripcion === "Pendiente" && (
-            <span className="badge bg-warning">Pendiente</span>
+            <span className="badge badge-pendiente">Pendiente</span>
           )}
           {estadoInscripcion === "Aceptado" && (
-            <span className="badge bg-success">Aceptado</span>
+            <span className="badge badge-aceptado">Aceptado</span>
           )}
           {estadoInscripcion === "Rechazado" && (
-            <span className="badge bg-danger">Rechazado</span>
+            <span className="badge badge-rechazado">Rechazado</span>
           )}
         </div>
 
-        {estadoInscripcion === "Aceptado" ? (
-          <Link
-            to={`/materia/${materia._id}`}
-            className="btn-materia"
-          >
-            Acceder
-          </Link>
-        ) : (
-          <button
-            className="btn-materia"
-            disabled={estadoInscripcion === "Pendiente"}
-            onClick={() => handleInscripcion(materia._id)}
-          >
-            {estadoInscripcion === "Pendiente"
-              ? "Solicitud Enviada"
-              : "Solicitar Inscripción"}
-          </button>
-        )}
+        {/* Botón bien posicionado */}
+        <div className="materia-action">
+          {estadoInscripcion === "Aceptado" ? (
+            <Link
+              to={`/materia/${materia._id}`}
+              className="btn-materia"
+            >
+              Acceder
+            </Link>
+          ) : (
+            <button
+              className="btn-materia"
+              disabled={estadoInscripcion === "Pendiente"}
+              onClick={() => handleInscripcion(materia._id)}
+            >
+              {estadoInscripcion === "Pendiente"
+                ? "Solicitud Enviada"
+                : "Solicitar Inscripción"}
+            </button>
+          )}
+        </div>
       </div>
     );
   };

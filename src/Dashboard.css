@@ -230,3 +230,82 @@ body {
   }
 }
 
+.materia-card {
+  width: 300px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.materia-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.materia-level {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.materia-profesor {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 15px;
+}
+
+/* Estados de inscripción con mejor estilo */
+.inscription-status {
+  margin-bottom: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.badge-pendiente {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-aceptado {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-rechazado {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Botón mejor alineado */
+.materia-action {
+  margin-top: 10px;
+}
+
+.btn-materia {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-materia:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
