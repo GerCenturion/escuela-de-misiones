@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Perfil from "../components/Perfil";
 
 const ProfessorDashboard = () => {
   const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false); // Verificar si el usuario es admin
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userData, setUserData] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [activeSection, setActiveSection] = useState("home");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSidebarOpen(window.innerWidth > 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -15,6 +28,23 @@ const ProfessorDashboard = () => {
       window.location.href = "/login";
       return;
     }
+
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/usuarios/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al obtener los datos del usuario");
+        }
+
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error al cargar los datos del usuario:", error);
+      }
+    };
 
     const fetchMaterias = async () => {
       try {
@@ -28,8 +58,6 @@ const ProfessorDashboard = () => {
         }
 
         const data = await response.json();
-
-        // Filtrar materias asignadas al profesor
         const materiasProfesor = data.filter(
           (materia) => materia.professor?._id === obtenerIdProfesor()
         );
@@ -44,13 +72,14 @@ const ProfessorDashboard = () => {
       try {
         const decodedToken = JSON.parse(atob(token.split(".")[1]));
         if (decodedToken.role === "admin") {
-          setIsAdmin(true); // Es admin
+          setIsAdmin(true);
         }
       } catch (error) {
         console.error("Error al decodificar el token:", error);
       }
     };
 
+    fetchUserData();
     fetchMaterias();
     verificarAdmin();
   }, [token]);
@@ -58,7 +87,7 @@ const ProfessorDashboard = () => {
   const obtenerIdProfesor = () => {
     try {
       const decodedToken = JSON.parse(atob(token.split(".")[1]));
-      return decodedToken.id; // ID del profesor
+      return decodedToken.id;
     } catch (error) {
       console.error("Error al decodificar el token:", error);
       return null;
@@ -95,31 +124,91 @@ const ProfessorDashboard = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <h1>Dashboard del Profesor</h1>
-      {error && <div className="alert alert-danger">{error}</div>}
+    <div className="dashboard-container">
+      <button
+        className="menu-hamburguesa"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        ☰
+      </button>
 
-      {isAdmin && (
-        <button
-          className="btn btn-warning mb-3"
-          onClick={() => navigate("/admin-dashboard")}
-        >
-          Ir al Dashboard de Administración
-        </button>
-      )}
+      <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
+        <h2 className="sidebar-title">Escuela de Misiones</h2>
+        <nav className="sidebar-nav">
+          <ul>
+            {isAdmin && (
+              <li>
+                <button onClick={() => navigate("/admin-dashboard")}>
+                  Ir al Panel de Administración
+                </button>
+              </li>
+            )}
+            <li>
+              <button
+                className={activeSection === "materias" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("materias");
+                  setIsSidebarOpen(false);
+                }}
+              >
+                Materias Asignadas
+              </button>
+            </li>
+            <li>
+              <button
+                className={activeSection === "profile" ? "active" : ""}
+                onClick={() => {
+                  setActiveSection("profile");
+                  setIsSidebarOpen(false);
+                }}
+              >
+                Perfil
+              </button>
+            </li>
+            <li>
+              <Link to="/">Cerrar Sesión</Link>
+            </li>
+          </ul>
+        </nav>
+        <div className="container">
+          <img
+            src="/logo.png"
+            alt="Escuela de Misiones"
+            style={{ height: "150px", marginRight: "5px" }}
+          />
+        </div>
+      </aside>
 
-      <ul className="list-group">
-        {materias.length > 0 ? (
-          materias.map((materia) => (
-            <MateriaItem
-              key={materia._id}
-              materia={materia}
+      <main className="main-content">
+        <div className="container mt-5">
+          {/* <h1>
+            {userData ? `Bienvenido, Profesor ${userData.name}` : "Cargando..."}
+          </h1> */}
+          {error && <div className="alert alert-danger">{error}</div>}
+          {activeSection === "profile" ? (
+            <Perfil
+              userData={userData}
+              API_URL={API_URL}
+              token={token}
             />
-          ))
-        ) : (
-          <p>No tienes materias asignadas.</p>
-        )}
-      </ul>
+          ) : activeSection === "materias" ? (
+            <ul className="list-group">
+              {materias.length > 0 ? (
+                materias.map((materia) => (
+                  <MateriaItem
+                    key={materia._id}
+                    materia={materia}
+                  />
+                ))
+              ) : (
+                <p>No tienes materias asignadas.</p>
+              )}
+            </ul>
+          ) : (
+            <p>Selecciona una opción del menú.</p>
+          )}
+        </div>
+      </main>
     </div>
   );
 };
