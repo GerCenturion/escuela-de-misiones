@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Perfil from "../components/Perfil";
+import LogoutButton from "../components/LogoutButton";
 import "../Dashboard.css";
 
 const Dashboard = () => {
@@ -228,9 +229,7 @@ const Dashboard = () => {
                 Perfil
               </button>
             </li>
-            <li>
-              <Link to="/">Cerrar Sesión</Link>
-            </li>
+            <LogoutButton />{" "}
           </ul>
         </nav>
       </aside>
@@ -301,9 +300,7 @@ const Dashboard = () => {
                   Perfil
                 </button>
               </li>
-              <li>
-                <Link to="/">Cerrar Sesión</Link>
-              </li>
+              <LogoutButton />{" "}
             </ul>
           </nav>
 

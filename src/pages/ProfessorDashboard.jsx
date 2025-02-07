@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
+import LogoutButton from "../components/LogoutButton";
 
 const ProfessorDashboard = () => {
   const [materias, setMaterias] = useState([]);
@@ -165,9 +166,7 @@ const ProfessorDashboard = () => {
                 Perfil
               </button>
             </li>
-            <li>
-              <Link to="/">Cerrar Sesión</Link>
-            </li>
+            <LogoutButton />{" "}
           </ul>
         </nav>
         <div className="container">

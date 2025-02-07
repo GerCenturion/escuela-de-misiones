@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
+import LogoutButton from "../components/LogoutButton";
 import "../Dashboard.css";
 
 const AdminDashboard = () => {
@@ -180,9 +181,7 @@ const AdminDashboard = () => {
               >
                 Perfil
               </button>
-              <li>
-                <Link to="/">Cerrar Sesión</Link>
-              </li>
+              <LogoutButton />{" "}
             </li>{" "}
           </ul>
         </nav>
