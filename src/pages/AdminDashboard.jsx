@@ -127,6 +127,46 @@ const AdminDashboard = () => {
     navigate("/professor-dashboard");
   };
 
+  const MateriaItem = ({ materia }) => {
+    const navigate = useNavigate();
+    const token = localStorage.getItem("token");
+    const decodedToken = token ? JSON.parse(atob(token.split(".")[1])) : null;
+    const isAdmin = decodedToken?.role === "admin";
+
+    const alumnosAceptados = materia.students.filter(
+      (student) => student.status === "Aceptado"
+    ).length;
+
+    const alumnosPendientes = materia.students.filter(
+      (student) => student.status === "Pendiente"
+    ).length;
+
+    return (
+      <li className="list-group-item">
+        <h5>{materia.name}</h5>
+        <p>Nivel: {materia.level}</p>
+        <p>
+          <strong>Alumnos:</strong> {alumnosAceptados} aceptados,{" "}
+          {alumnosPendientes} pendientes
+        </p>
+        <div className="d-flex justify-content-between align-items-center">
+          <button
+            className="btn btn-primary"
+            onClick={() =>
+              navigate(
+                isAdmin
+                  ? `/admin/materias/${materia._id}`
+                  : `/professor/materias/${materia._id}`
+              )
+            }
+          >
+            Ver Materia
+          </button>
+        </div>
+      </li>
+    );
+  };
+
   return (
     <div className="dashboard-container">
       <button
@@ -165,6 +205,14 @@ const AdminDashboard = () => {
                   Ir al Panel del Profesor
                 </button>
               )}
+            </li>
+            <li>
+              <button
+                className={activeSection === "verMaterias" ? "active" : ""}
+                onClick={() => setActiveSection("verMaterias")}
+              >
+                Ver Todas las Materias
+              </button>
             </li>
             <li>
               <button
@@ -289,6 +337,38 @@ const AdminDashboard = () => {
             </table>
           </section>
         )}
+        <div className="materias-container">
+          {materias
+            .filter((materia) => materia.isEnrollmentOpen)
+            .map((materia) => (
+              <div
+                key={materia._id}
+                className="materia-card"
+              >
+                <h3>{materia.name}</h3>
+                <p>
+                  <strong>Nivel:</strong> {materia.level}
+                </p>
+                <p>
+                  <strong>Profesor:</strong>{" "}
+                  {materia.professor?.name || "Sin asignar"}
+                </p>
+                <p>
+                  <strong>Alumnos Inscritos:</strong> {materia.students.length}
+                </p>
+
+                <div className="button-group">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate(`/admin/materias/${materia._id}`)}
+                  >
+                    Ingresar
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+
         {activeSection === "profile" && (
           <Perfil
             userData={userData}

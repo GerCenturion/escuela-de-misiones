@@ -17,6 +17,7 @@ import EditUser from "./pages/EditUser";
 import EditMateria from "./pages/EditMateria";
 import CreateMateria from "./pages/CreateMateria";
 import ProfessorMateriaPage from "./pages/ProfessorMateriaPage";
+import AdminMateriaPage from "./pages/AdminMateriaPage";
 import MateriaDetalle from "./pages/MateriaDetalle";
 import ExamenCompletar from "./pages/ExamenCompletar";
 import CorregirExamen from "./pages/CorregirExamen";
@@ -162,6 +163,10 @@ const App = () => {
                 <ProfessorMateriaPage />
               </ProfessorRoute>
             }
+          />
+          <Route
+            path="/admin/materias/:id"
+            element={<AdminMateriaPage />}
           />
         </Routes>
         <WhatsAppButton />
