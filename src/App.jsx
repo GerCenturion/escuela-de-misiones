@@ -22,6 +22,7 @@ import MateriaDetalle from "./pages/MateriaDetalle";
 import ExamenCompletar from "./pages/ExamenCompletar";
 import CorregirExamen from "./pages/CorregirExamen";
 import ExamenRevisar from "./components/ExamenRevisar";
+import RecuperarContrasena from "./pages/RecuperarContrasena";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 const App = () => {
@@ -86,6 +87,16 @@ const App = () => {
               <>
                 <Header />
                 <Login />
+                <Footer />
+              </>
+            }
+          />
+          <Route
+            path="/recuperar"
+            element={
+              <>
+                <Header />
+                <RecuperarContrasena />
                 <Footer />
               </>
             }

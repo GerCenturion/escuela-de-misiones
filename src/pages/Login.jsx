@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const Login = () => {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // 🔥 Estado para mostrar u ocultar la contraseña
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -93,15 +94,23 @@ const Login = () => {
                 required
               />
             </div>
-            <div className="mb-3">
+            <div className="mb-3 position-relative">
               <label className="form-label">Contraseña:</label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // 🔥 Cambia entre texto y contraseña
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {/* 🔥 Botón para ver/ocultar contraseña */}
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="position-absolute top-50 end-0 translate-middle-y me-3"
+                style={{ cursor: "pointer" }}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </span>
             </div>
             {error && (
               <div className="alert alert-danger text-center">{error}</div>
@@ -112,6 +121,17 @@ const Login = () => {
             >
               Iniciar Sesión
             </button>
+
+            {/* 🔥 Botón de Recuperar Contraseña */}
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                className="btn btn-link text-decoration-none"
+                onClick={() => navigate("/recuperar")}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
           </form>
         ) : (
           <div>
