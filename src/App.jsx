@@ -6,7 +6,6 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Program from "./pages/Program";
 import Registration from "./pages/Registration";
-import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import ProfessorDashboard from "./pages/ProfessorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -71,16 +70,7 @@ const App = () => {
               </>
             }
           />
-          <Route
-            path="/contact"
-            element={
-              <>
-                <Header />
-                <Contact />
-                <Footer />
-              </>
-            }
-          />
+
           <Route
             path="/login"
             element={
