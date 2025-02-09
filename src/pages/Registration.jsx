@@ -27,12 +27,14 @@ const Registration = () => {
   const [showPasswords, setShowPasswords] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerificationField, setShowVerificationField] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
   const apiUrl = import.meta.env.VITE_API_URL; // Variable de entorno
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setError(""); // 🔥 Limpiar errores automáticamente al escribir
   };
 
   const validatePassword = (password) => {
@@ -73,6 +75,7 @@ const Registration = () => {
       // 🔥 Mostrar mensaje de confirmación y campo de verificación
       setStatus("📩 Código de verificación enviado por WhatsApp.");
       setShowVerificationField(true);
+      setAttempts(0);
     } catch (error) {
       console.error("Error al enviar datos:", error);
       setError("Hubo un problema al enviar la inscripción.");
@@ -82,6 +85,10 @@ const Registration = () => {
   // 📌 Verificar código de WhatsApp
   const handleVerifyCode = async () => {
     try {
+      // 🔥 Limpiar estados previos antes de procesar la verificación
+      setError("");
+      setStatus("Verificando código...");
+
       const response = await fetch(`${apiUrl}/usuarios/verificar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,7 +107,38 @@ const Registration = () => {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      setError("Código incorrecto o expirado.");
+      console.error("Código incorrecto. Generando nuevo código...");
+
+      setError(
+        "❌ Código incorrecto. Se ha enviado un nuevo código a tu WhatsApp."
+      );
+      setStatus(""); // 🔥 Limpia el mensaje de estado
+
+      // Aumentar intentos
+      setAttempts(attempts + 1);
+
+      try {
+        const resendResponse = await fetch(
+          `${apiUrl}/usuarios/reenviar-codigo`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: formData.email }),
+          }
+        );
+
+        if (!resendResponse.ok) {
+          throw new Error("Error al reenviar el código.");
+        }
+
+        setStatus("📩 Se ha enviado un nuevo código a tu WhatsApp.");
+        setVerificationCode(""); // 🔥 Limpiar campo de verificación solo después de reenviar el código
+      } catch (resendError) {
+        console.error("Error al reenviar código:", resendError);
+        setError(
+          "⚠️ Hubo un problema al enviar el nuevo código. Inténtalo nuevamente."
+        );
+      }
     }
   };
 
@@ -325,9 +363,7 @@ const Registration = () => {
             required
           />
         </div>
-        {/* Error de Contraseña */}
-        {error && <div className="text-danger mb-3">{error}</div>}
-        {/* Botón de Enviar */}
+
         <button
           type="submit"
           className="btn btn-primary w-100"
@@ -349,12 +385,23 @@ const Registration = () => {
             className="form-control mb-2"
             placeholder="Código de verificación"
             value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
+            onChange={(e) => {
+              setVerificationCode(e.target.value);
+              setError(""); // 🔥 Limpiar errores cuando el usuario escribe un nuevo código
+            }}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // 🔥 Evita que el formulario se envíe por defecto
+                handleVerifyCode(); // 🔥 Llama a la función de verificación
+              }
+            }}
             required
           />
+
           <button
             onClick={handleVerifyCode}
             className="btn btn-success w-100"
+            disabled={!verificationCode.trim()} // 🔥 Deshabilita si el campo está vacío
           >
             Verificar Código
           </button>
