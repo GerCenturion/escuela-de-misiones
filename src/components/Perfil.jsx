@@ -225,9 +225,7 @@ const Perfil = ({ API_URL, token }) => {
         <p>
           <strong>Nombre:</strong> {userData?.name}
         </p>
-        <p>
-          <strong>Email:</strong> {userData?.email}
-        </p>
+
         <p>
           <strong>Fecha de Nacimiento:</strong>{" "}
           {new Date(userData?.birthdate).toLocaleDateString()}
@@ -247,7 +245,7 @@ const Perfil = ({ API_URL, token }) => {
           {userData?.phoneArea}-{userData?.phoneNumber}
         </p>
         <p>
-          <strong>Tipo de Teléfono:</strong> {userData?.phoneType}
+          <strong>Email:</strong> {userData?.email}
         </p>
       </div>
 
