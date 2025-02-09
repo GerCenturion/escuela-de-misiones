@@ -21,6 +21,7 @@ const Registration = () => {
   });
 
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_URL; // Variable de entorno
@@ -65,7 +66,12 @@ const Registration = () => {
       alert(data.message);
       console.log("Datos enviados correctamente:", data);
 
-      // Limpia el formulario después de enviarlo
+      // 🔥 Mensaje de confirmación en el frontend
+      setStatus(
+        "✅ Registro exitoso. En breve recibirás un mensaje en tu WhatsApp."
+      );
+
+      // Limpiar formulario
       setFormData({
         name: "",
         email: "",
@@ -85,7 +91,7 @@ const Registration = () => {
         confirmPassword: "",
       });
 
-      setError(""); // Limpia cualquier mensaje de error previo
+      setError(""); // Limpia errores previos
     } catch (error) {
       console.error("Error al enviar datos:", error);
       setError("Hubo un problema al enviar la inscripción.");
@@ -324,6 +330,9 @@ const Registration = () => {
           Enviar Inscripción
         </button>
       </form>
+      {/* 🔥 Mostrar estado del registro */}
+      {status && <p className="text-success mt-3">{status}</p>}
+      {error && <p className="text-danger mt-3">{error}</p>}
     </div>
   );
 };
