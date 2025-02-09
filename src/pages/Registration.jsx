@@ -270,7 +270,7 @@ const Registration = () => {
             />
           </div>
         </div>
-        {/* Tipo de Teléfono */}
+        {/* Tipo de Teléfono
         <div className="mb-3">
           <label className="form-label">
             Especificar si es WhatsApp, Telegram o Línea Fija:
@@ -287,7 +287,7 @@ const Registration = () => {
             <option value="Telegram">Telegram</option>
             <option value="Línea Fija">Línea Fija</option>
           </select>
-        </div>
+        </div> */}
         {/* Iglesia */}
         <div className="mb-3">
           <label className="form-label">
