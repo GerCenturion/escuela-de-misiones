@@ -7,6 +7,12 @@ import "../Dashboard.css";
 const AdminDashboard = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [materias, setMaterias] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [sortOption, setSortOption] = useState("name-asc");
+  const [levelFilter, setLevelFilter] = useState("");
+  const [professorFilter, setProfessorFilter] = useState("");
+  const [enrollmentFilter, setEnrollmentFilter] = useState("");
   const [error, setError] = useState("");
   const [userData, setUserData] = useState(null);
   const [activeSection, setActiveSection] = useState("usuarios");
@@ -220,27 +226,16 @@ const AdminDashboard = () => {
                 onClick={() => {
                   setActiveSection("profile");
                   setIsSidebarOpen(false);
-                  <Perfil
-                    userData={userData}
-                    API_URL={API_URL}
-                    token={token}
-                  />;
                 }}
               >
                 Perfil
               </button>
-              <LogoutButton />{" "}
-            </li>{" "}
+            </li>
+            <li>
+              <LogoutButton />
+            </li>
           </ul>
         </nav>
-        <div className="container">
-          {/* Logo con imagen */}
-          <img
-            src="/logo.png"
-            alt="Escuela de Misiones"
-            style={{ height: "150px", marginRight: "5px" }}
-          />
-        </div>
       </aside>
 
       <main className="main-content">
@@ -248,6 +243,39 @@ const AdminDashboard = () => {
           <section>
             <h1>Administración de Usuarios</h1>
             {error && <div className="alert alert-danger">{error}</div>}
+            {/* Filtros y Ordenación */}
+            <div className="d-flex mb-3 gap-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar por nombre o email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+
+              <select
+                className="form-select"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="">Todos los Roles</option>
+                <option value="alumno">Alumno</option>
+                <option value="profesor">Profesor</option>
+                <option value="admin">Administrador</option>
+              </select>
+
+              <select
+                className="form-select"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option value="name-asc">Nombre (A-Z)</option>
+                <option value="name-desc">Nombre (Z-A)</option>
+                <option value="email-asc">Email (A-Z)</option>
+                <option value="email-desc">Email (Z-A)</option>
+              </select>
+            </div>
+
             <table className="table table-striped">
               <thead>
                 <tr>
@@ -258,27 +286,51 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {usuarios.map((usuario) => (
-                  <tr key={usuario._id}>
-                    <td>{usuario.name}</td>
-                    <td>{usuario.email}</td>
-                    <td>{usuario.role}</td>
-                    <td>
-                      <button
-                        className="btn btn-danger btn-sm me-2"
-                        onClick={() => handleDeleteUsuario(usuario._id)}
-                      >
-                        Eliminar
-                      </button>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => navigate(`/admin/edit/${usuario._id}`)}
-                      >
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {usuarios
+                  .filter(
+                    (usuario) =>
+                      usuario.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()) ||
+                      usuario.email
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
+                  )
+                  .filter((usuario) =>
+                    roleFilter ? usuario.role === roleFilter : true
+                  )
+                  .sort((a, b) => {
+                    if (sortOption === "name-asc")
+                      return a.name.localeCompare(b.name);
+                    if (sortOption === "name-desc")
+                      return b.name.localeCompare(a.name);
+                    if (sortOption === "email-asc")
+                      return a.email.localeCompare(b.email);
+                    if (sortOption === "email-desc")
+                      return b.email.localeCompare(a.email);
+                    return 0;
+                  })
+                  .map((usuario) => (
+                    <tr key={usuario._id}>
+                      <td>{usuario.name}</td>
+                      <td>{usuario.email}</td>
+                      <td>{usuario.role}</td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm me-2"
+                          onClick={() => handleDeleteUsuario(usuario._id)}
+                        >
+                          Eliminar
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => navigate(`/admin/edit/${usuario._id}`)}
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </section>
@@ -293,7 +345,82 @@ const AdminDashboard = () => {
             >
               Agregar Materia
             </button>
+
             {error && <div className="alert alert-danger">{error}</div>}
+
+            {/* Filtros y Ordenación */}
+            <div className="d-flex mb-3 gap-3">
+              {/* Buscar por nombre */}
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar por nombre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+
+              {/* Filtrar por nivel */}
+              <select
+                className="form-select"
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+              >
+                <option value="">Todos los niveles</option>
+                <option value="Inicial">Inicial</option>
+                <option value="Elemental">Elemental</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+              </select>
+
+              {/* Filtrar por profesor */}
+              <select
+                className="form-select"
+                value={professorFilter}
+                onChange={(e) => setProfessorFilter(e.target.value)}
+              >
+                <option value="">Todos los profesores</option>
+                {materias
+                  .map((materia) => materia.professor?.name)
+                  .filter(
+                    (name, index, self) => name && self.indexOf(name) === index
+                  )
+                  .map((profName, index) => (
+                    <option
+                      key={index}
+                      value={profName}
+                    >
+                      {profName}
+                    </option>
+                  ))}
+              </select>
+
+              {/* Filtrar por estado de inscripción */}
+              <select
+                className="form-select"
+                value={enrollmentFilter}
+                onChange={(e) => setEnrollmentFilter(e.target.value)}
+              >
+                <option value="">Todas</option>
+                <option value="Habilitada">Habilitada</option>
+                <option value="Deshabilitada">Deshabilitada</option>
+              </select>
+
+              {/* Ordenar */}
+              <select
+                className="form-select"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option value="name-asc">Nombre (A-Z)</option>
+                <option value="name-desc">Nombre (Z-A)</option>
+                <option value="level-asc">Nivel (A-Z)</option>
+                <option value="level-desc">Nivel (Z-A)</option>
+                <option value="professor-asc">Profesor (A-Z)</option>
+                <option value="professor-desc">Profesor (Z-A)</option>
+              </select>
+            </div>
+
+            {/* Tabla de materias */}
             <table className="table table-striped">
               <thead>
                 <tr>
@@ -305,80 +432,119 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {materias.map((materia) => (
-                  <tr key={materia._id}>
-                    <td>{materia.name}</td>
-                    <td>{materia.level}</td>
-                    <td>{materia.professor?.name || "Sin asignar"}</td>
-                    <td>
-                      {materia.isEnrollmentOpen
-                        ? "Habilitada"
-                        : "Deshabilitada"}
-                    </td>
-                    <td>
-                      <button
-                        className="btn btn-danger btn-sm me-2"
-                        onClick={() => handleDeleteMateria(materia._id)}
-                      >
-                        Eliminar
-                      </button>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() =>
-                          navigate(`/admin/materias/edit/${materia._id}`)
-                        }
-                      >
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {materias
+                  .filter((materia) =>
+                    materia.name
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+                  )
+                  .filter((materia) =>
+                    levelFilter ? materia.level === levelFilter : true
+                  )
+                  .filter((materia) =>
+                    professorFilter
+                      ? materia.professor?.name === professorFilter
+                      : true
+                  )
+                  .filter((materia) =>
+                    enrollmentFilter
+                      ? enrollmentFilter === "Habilitada"
+                        ? materia.isEnrollmentOpen
+                        : !materia.isEnrollmentOpen
+                      : true
+                  )
+                  .sort((a, b) => {
+                    if (sortOption === "name-asc")
+                      return a.name.localeCompare(b.name);
+                    if (sortOption === "name-desc")
+                      return b.name.localeCompare(a.name);
+                    if (sortOption === "level-asc")
+                      return a.level.localeCompare(b.level);
+                    if (sortOption === "level-desc")
+                      return b.level.localeCompare(a.level);
+                    if (sortOption === "professor-asc")
+                      return (a.professor?.name || "").localeCompare(
+                        b.professor?.name || ""
+                      );
+                    if (sortOption === "professor-desc")
+                      return (b.professor?.name || "").localeCompare(
+                        a.professor?.name || ""
+                      );
+                    return 0;
+                  })
+                  .map((materia) => (
+                    <tr key={materia._id}>
+                      <td>{materia.name}</td>
+                      <td>{materia.level}</td>
+                      <td>{materia.professor?.name || "Sin asignar"}</td>
+                      <td>
+                        {materia.isEnrollmentOpen
+                          ? "Habilitada"
+                          : "Deshabilitada"}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm me-2"
+                          onClick={() => handleDeleteMateria(materia._id)}
+                        >
+                          Eliminar
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() =>
+                            navigate(`/admin/materias/edit/${materia._id}`)
+                          }
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </section>
         )}
-        <div className="materias-container">
-          {materias
-            .filter((materia) => materia.isEnrollmentOpen)
-            .map((materia) => (
-              <div
-                key={materia._id}
-                className="materia-card"
-              >
-                <h3>{materia.name}</h3>
-                <p>
-                  <strong>Nivel:</strong> {materia.level}
-                </p>
-                <p>
-                  <strong>Profesor:</strong>{" "}
-                  {materia.professor?.name || "Sin asignar"}
-                </p>
-                <p>
-                  <strong>Alumnos Inscritos:</strong> {materia.students.length}
-                </p>
 
-                <div className="button-group">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => navigate(`/admin/materias/${materia._id}`)}
+        {activeSection === "verMaterias" && (
+          <section>
+            <h1>Todas las Materias Habilitadas</h1>
+            <div className="materias-container">
+              {materias
+                .filter((materia) => materia.isEnrollmentOpen)
+                .map((materia) => (
+                  <div
+                    key={materia._id}
+                    className="materia-card"
                   >
-                    Ingresar
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
-
-        {activeSection === "profile" && (
-          <Perfil
-            userData={userData}
-            API_URL={API_URL}
-            token={token}
-          />
+                    <h3>{materia.name}</h3>
+                    <p>
+                      <strong>Nivel:</strong> {materia.level}
+                    </p>
+                    <p>
+                      <strong>Profesor:</strong>{" "}
+                      {materia.professor?.name || "Sin asignar"}
+                    </p>
+                    <p>
+                      <strong>Alumnos Inscritos:</strong>{" "}
+                      {materia.students.length}
+                    </p>
+                    <div className="button-group">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() =>
+                          navigate(`/admin/materias/${materia._id}`)
+                        }
+                      >
+                        Ingresar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </section>
         )}
       </main>
     </div>
   );
 };
-
 export default AdminDashboard;
