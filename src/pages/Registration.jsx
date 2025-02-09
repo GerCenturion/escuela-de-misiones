@@ -6,7 +6,7 @@ const Registration = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phoneCode: "",
+    phoneCode: "54",
     phoneArea: "",
     phoneNumber: "",
     phoneType: "",
@@ -254,7 +254,7 @@ const Registration = () => {
               type="text"
               className="form-control"
               name="phoneArea"
-              placeholder="Área (387)"
+              placeholder="Área (341)"
               value={formData.phoneArea}
               onChange={handleChange}
               required
@@ -270,24 +270,7 @@ const Registration = () => {
             />
           </div>
         </div>
-        {/* Tipo de Teléfono
-        <div className="mb-3">
-          <label className="form-label">
-            Especificar si es WhatsApp, Telegram o Línea Fija:
-          </label>
-          <select
-            className="form-control"
-            name="phoneType"
-            value={formData.phoneType}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione una opción</option>
-            <option value="WhatsApp">WhatsApp</option>
-            <option value="Telegram">Telegram</option>
-            <option value="Línea Fija">Línea Fija</option>
-          </select>
-        </div> */}
+
         {/* Iglesia */}
         <div className="mb-3">
           <label className="form-label">
