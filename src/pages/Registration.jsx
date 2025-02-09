@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Registration = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,6 +25,8 @@ const Registration = () => {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [showVerificationField, setShowVerificationField] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_URL; // Variable de entorno
 
@@ -66,35 +70,37 @@ const Registration = () => {
       alert(data.message);
       console.log("Datos enviados correctamente:", data);
 
-      // 🔥 Mensaje de confirmación en el frontend
-      setStatus(
-        "✅ Registro exitoso. En breve recibirás un mensaje en tu WhatsApp."
-      );
-
-      // Limpiar formulario
-      setFormData({
-        name: "",
-        email: "",
-        phoneCode: "",
-        phoneArea: "",
-        phoneNumber: "",
-        phoneType: "",
-        birthdate: "",
-        dni: "",
-        address: "",
-        civilStatus: "",
-        profession: "",
-        church: "",
-        ministerialRole: "",
-        reason: "",
-        password: "",
-        confirmPassword: "",
-      });
-
-      setError(""); // Limpia errores previos
+      // 🔥 Mostrar mensaje de confirmación y campo de verificación
+      setStatus("📩 Código de verificación enviado por WhatsApp.");
+      setShowVerificationField(true);
     } catch (error) {
       console.error("Error al enviar datos:", error);
       setError("Hubo un problema al enviar la inscripción.");
+    }
+  };
+
+  // 📌 Verificar código de WhatsApp
+  const handleVerifyCode = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/usuarios/verificar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, verificationCode }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Código incorrecto o expirado.");
+      }
+
+      setStatus("✅ Verificación exitosa. Registro completado.");
+      setShowVerificationField(false);
+
+      // 🔥 Redirigir a la página de inicio de sesión después de 2 segundos
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (error) {
+      setError("Código incorrecto o expirado.");
     }
   };
 
@@ -330,6 +336,31 @@ const Registration = () => {
           Enviar Inscripción
         </button>
       </form>
+      {/* 🔥 Sección de verificación de código */}
+      {showVerificationField && (
+        <div className="mt-4">
+          <h3>🔑 Verificación de WhatsApp</h3>
+          <p>
+            Ingresa el código que recibiste en tu WhatsApp para completar el
+            registro.
+          </p>
+          <input
+            type="text"
+            className="form-control mb-2"
+            placeholder="Código de verificación"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            required
+          />
+          <button
+            onClick={handleVerifyCode}
+            className="btn btn-success w-100"
+          >
+            Verificar Código
+          </button>
+        </div>
+      )}
+
       {/* 🔥 Mostrar estado del registro */}
       {status && <p className="text-success mt-3">{status}</p>}
       {error && <p className="text-danger mt-3">{error}</p>}
