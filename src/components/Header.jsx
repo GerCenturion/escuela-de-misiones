@@ -47,15 +47,7 @@ const Header = () => {
                 Inicio
               </Link>
             </li>
-            <li className="nav-item">
-              <Link
-                className="nav-link"
-                to="/about"
-                onClick={() => setIsOpen(false)}
-              >
-                Sobre Nosotros
-              </Link>
-            </li>
+
             <li className="nav-item">
               <Link
                 className="nav-link"
