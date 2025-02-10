@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
+import LibretaPage from "../components/LibretaPage";
 import "../Dashboard.css";
 
 const Dashboard = () => {
@@ -9,11 +10,93 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [availableMaterias, setAvailableMaterias] = useState([]);
   const [inscriptionStatus, setInscriptionStatus] = useState({});
+  const [notas, setNotas] = useState([]);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-
+  const [filteredNotas, setFilteredNotas] = useState([]);
+  const [searchMateria, setSearchMateria] = useState("");
+  const [searchProfesor, setSearchProfesor] = useState("");
+  const [notaMin, setNotaMin] = useState("");
+  const [notaMax, setNotaMax] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchNotas = async () => {
+      if (!token) {
+        setError("No hay token de autenticación.");
+        return;
+      }
+
+      let userId;
+      try {
+        // Obtener userId desde el token
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        userId = decodedToken.id;
+
+        if (!userId) {
+          setError("No se pudo obtener el ID del usuario.");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/materias/libreta/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al cargar la libreta");
+        }
+
+        const data = await response.json();
+        setNotas(data);
+      } catch (error) {
+        setError("Error al cargar la libreta");
+        console.error("Error en fetchNotas:", error);
+      }
+    };
+
+    fetchNotas();
+  }, [token]);
+
+  // Función para formatear la fecha en dd/mm/aa
+  const formatFecha = (fecha) => {
+    if (!fecha) return "Sin fecha";
+    const date = new Date(fecha);
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear().toString().slice(-2); // Últimos 2 dígitos del año
+    return `${day}/${month}/${year}`;
+  };
+
+  useEffect(() => {
+    let filtered = notas;
+
+    if (searchMateria) {
+      filtered = filtered.filter((nota) =>
+        nota.materia.name.toLowerCase().includes(searchMateria.toLowerCase())
+      );
+    }
+
+    if (searchProfesor) {
+      filtered = filtered.filter((nota) =>
+        nota.profesor.name.toLowerCase().includes(searchProfesor.toLowerCase())
+      );
+    }
+
+    if (notaMin !== "") {
+      filtered = filtered.filter(
+        (nota) => nota.notaFinal >= parseFloat(notaMin)
+      );
+    }
+
+    if (notaMax !== "") {
+      filtered = filtered.filter(
+        (nota) => nota.notaFinal <= parseFloat(notaMax)
+      );
+    }
+
+    setFilteredNotas(filtered);
+  }, [searchMateria, searchProfesor, notaMin, notaMax, notas]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -255,6 +338,8 @@ const Dashboard = () => {
             </div>
           </section>
         )}
+        {activeSection === "libreta" && <LibretaPage userId={userData?._id} />}
+
         {activeSection === "profile" && (
           <Perfil
             userData={userData}
@@ -287,6 +372,17 @@ const Dashboard = () => {
                   }}
                 >
                   Materias
+                </button>
+              </li>
+              <li>
+                <button
+                  className={activeSection === "libreta" ? "active" : ""}
+                  onClick={() => {
+                    setActiveSection("libreta");
+                    setIsSidebarOpen(false);
+                  }}
+                >
+                  Libreta de Notas
                 </button>
               </li>
               <li>

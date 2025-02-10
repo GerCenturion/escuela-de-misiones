@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
+import LibretasPage from "../components/LibretasPage";
 import "../Dashboard.css";
 
 const AdminDashboard = () => {
@@ -220,6 +221,14 @@ const AdminDashboard = () => {
                 Ver Todas las Materias
               </button>
             </li>
+            <button
+              onClick={() => {
+                setActiveSection("libretas");
+                setIsSidebarOpen(false);
+              }}
+            >
+              Ver Libretas
+            </button>
             <li>
               <button
                 className={activeSection === "profile" ? "active" : ""}
@@ -335,6 +344,7 @@ const AdminDashboard = () => {
             </table>
           </section>
         )}
+        {activeSection === "libretas" && <LibretasPage token={token} />}
 
         {activeSection === "materias" && (
           <section>

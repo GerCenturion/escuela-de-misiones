@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
+import LibretasPage from "../components/LibretasPage";
 
 const ProfessorDashboard = () => {
   const [materias, setMaterias] = useState([]);
@@ -155,6 +156,14 @@ const ProfessorDashboard = () => {
                 Materias Asignadas
               </button>
             </li>
+            <button
+              onClick={() => {
+                setActiveSection("libretas");
+                setIsSidebarOpen(false);
+              }}
+            >
+              Ver Libretas
+            </button>
             <li>
               <button
                 className={activeSection === "profile" ? "active" : ""}
@@ -179,18 +188,23 @@ const ProfessorDashboard = () => {
       </aside>
 
       <main className="main-content">
+        {activeSection === "home" && (
+          <section>
+            <h1> Bienvenido {userData ? userData.name : "Cargando..."}</h1>
+          </section>
+        )}
         <div className="container mt-5">
-          {/* <h1>
-            {userData ? `Bienvenido, Profesor ${userData.name}` : "Cargando..."}
-          </h1> */}
-          {error && <div className="alert alert-danger">{error}</div>}
-          {activeSection === "profile" ? (
+          {activeSection === "libretas" && <LibretasPage token={token} />}
+
+          {activeSection === "profile" && (
             <Perfil
               userData={userData}
               API_URL={API_URL}
               token={token}
             />
-          ) : activeSection === "materias" ? (
+          )}
+
+          {activeSection === "materias" && (
             <ul className="list-group">
               {materias.length > 0 ? (
                 materias.map((materia) => (
@@ -203,8 +217,6 @@ const ProfessorDashboard = () => {
                 <p>No tienes materias asignadas.</p>
               )}
             </ul>
-          ) : (
-            <p>Selecciona una opción del menú.</p>
           )}
         </div>
       </main>

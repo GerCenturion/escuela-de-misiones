@@ -19,6 +19,7 @@ const AdminMateriaPage = () => {
   const navigate = useNavigate();
 
   const fetchMateria = async () => {
+    if (!id) return;
     try {
       const response = await fetch(`${API_URL}/materias/${id}`, {
         method: "GET",
@@ -104,6 +105,39 @@ const AdminMateriaPage = () => {
     return <div>Cargando materia...</div>;
   }
 
+  const cerrarMateria = async () => {
+    if (!id) {
+      alert("Error: No se encontró el ID de la materia.");
+      return;
+    }
+
+    console.log("Cerrando materia con ID:", id); // Depuración
+
+    try {
+      const response = await fetch(`${API_URL}/materias/cerrar/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json(); // Intentar parsear la respuesta
+      if (!response.ok) {
+        console.error("Error en la respuesta del servidor:", data);
+        throw new Error(
+          data.message || "Error desconocido al cerrar la materia"
+        );
+      }
+
+      alert(data.message);
+      navigate("/admin-dashboard"); // Redirigir después de cerrar
+    } catch (error) {
+      console.error("Error al cerrar materia:", error.message);
+      alert(error.message || "No se pudo cerrar la materia.");
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h1>{materia.name}</h1>
@@ -131,10 +165,18 @@ const AdminMateriaPage = () => {
       </button>
 
       <button
-        className="btn btn-info mb-3"
+        className="btn btn-info mb-3 me-2"
         onClick={() => setMostrarVideoManager(true)}
+        onUploadSuccess={fetchMateria}
       >
         Administrar Videos
+      </button>
+
+      <button
+        className="btn btn-danger mb-3"
+        onClick={cerrarMateria}
+      >
+        Cerrar Materia
       </button>
 
       <h2>Alumnos</h2>
