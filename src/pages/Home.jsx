@@ -2,38 +2,77 @@ import React from "react";
 
 const About = () => {
   return (
-    <section>
-      <h2>Modalidad de Estudio</h2>
+    <section className="about-container">
+      <h2 className="about-title">📚 Modalidad de Estudio</h2>
       <p>
-        Conforme a los tiempos que vivimos, hemos adoptado la “modalidad
-        virtual” para dictar las materias de nuestro Seminario Bíblico. Se dicta
-        a través de videos que se envían por medio de la aplicación Telegram
-        semanalmente. Allí mismo el profesor de la materia eleva las tareas
-        semanales y está a disposición para evacuar cualquier duda o consulta.
+        Nuestro <strong>Seminario Bíblico</strong> cuenta con un{" "}
+        <strong>Campus Virtual</strong> que permite a los estudiantes acceder a
+        todas las herramientas necesarias para su formación. A través de esta
+        plataforma, los alumnos pueden:
       </p>
+
+      <ul className="about-list">
+        <li>
+          📝 <strong>Inscribirse</strong> en las materias disponibles.
+        </li>
+        <li>
+          📚 <strong>Acceder</strong> al material de estudio.
+        </li>
+        <li>
+          🎥 <strong>Ver</strong> clases en video y material complementario.
+        </li>
+        <li>
+          ✅ <strong>Realizar</strong> los exámenes correspondientes.
+        </li>
+        <li>
+          📊 <strong>Obtener</strong> su nota final basada en el promedio de los
+          exámenes.
+        </li>
+      </ul>
+
+      <h3 className="about-subtitle">🗓️ Funcionamiento</h3>
       <p>
-        Las materias se dictan de marzo a noviembre de cada año. Cada materia
-        inicia el día 1º del mes y finaliza el último día del mismo. Los
-        primeros videos y tareas se entregan el día 1º del mes, y se envían
-        sucesivamente cada siete (7) días: el 8, el 15 y el 22.
+        📌 <strong>Calendario Académico:</strong> Las materias se dictan de{" "}
+        <strong>marzo a noviembre</strong> de cada año. Cada una inicia el{" "}
+        <strong>día 1º del mes</strong> y finaliza el{" "}
+        <strong>último día del mismo</strong>.
       </p>
+
       <p>
-        Las tareas deben ser entregadas vía Telegram de manera privada al
-        profesor correspondiente antes del plazo de la siguiente entrega.
+        📌 <strong>Evaluaciones:</strong> Los alumnos deben completar sus
+        exámenes a través del Campus Virtual antes de la fecha límite.
       </p>
-      <h3>Inscripción</h3>
+
+      <h3 className="about-subtitle">📝 Inscripción</h3>
       <p>
-        Al iniciar el Seminario, se envía por privado la Solicitud de
-        Inscripción Virtual, que debe ser completada. Una vez enviada, el
-        estudiante queda registrado como alumno regular.
+        Para comenzar, los estudiantes deben registrarse en el{" "}
+        <strong>Campus Virtual</strong> y solicitar la inscripción en las
+        materias de su interés.
       </p>
+
+      <h3 className="about-subtitle">💰 Costos y Pagos</h3>
       <p>
-        No se cobra inscripción. El costo por materia es de $3.000 individual o
-        $5.000 por matrimonio, pagaderos por depósito, transferencia bancaria o
-        MercadoPago. El pago se realiza por materia, y no es necesario abonar en
-        caso de no tomar materias en un mes específico.
+        <strong>✅ No se cobra inscripción.</strong> El costo por materia es:
       </p>
-      <p>Estamos a su disposición para cualquier consulta.</p>
+      <ul className="about-list">
+        <li>
+          💵 <strong>$3.000</strong> por estudiante individual.
+        </li>
+        <li>
+          👫 <strong>$5.000</strong> por matrimonio.
+        </li>
+      </ul>
+
+      <p>
+        Los pagos pueden realizarse mediante{" "}
+        <strong>depósito, transferencia bancaria o MercadoPago</strong>. Se paga
+        por materia, y <strong>no es obligatorio abonar si no se cursa</strong>{" "}
+        en un mes específico.
+      </p>
+
+      <p className="about-footer">
+        📩 Para más información, no dude en <strong>consultarnos.</strong>
+      </p>
     </section>
   );
 };
