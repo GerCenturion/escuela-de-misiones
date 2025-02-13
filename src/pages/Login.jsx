@@ -60,7 +60,7 @@ const Login = () => {
       });
 
       const data = await response.json();
-      setVerificationCode(""); // 🔥 Limpiar el campo de verificación
+      setVerificationCode("");
 
       if (!response.ok) {
         setStatus(data.message);
