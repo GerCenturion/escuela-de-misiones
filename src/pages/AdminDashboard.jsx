@@ -218,7 +218,7 @@ const AdminDashboard = () => {
                 className={activeSection === "verMaterias" ? "active" : ""}
                 onClick={() => setActiveSection("verMaterias")}
               >
-                Ver Todas las Materias
+                Materias Habilitadas
               </button>
             </li>
             <button
@@ -376,10 +376,10 @@ const AdminDashboard = () => {
                 onChange={(e) => setLevelFilter(e.target.value)}
               >
                 <option value="">Todos los niveles</option>
-                <option value="Inicial">Inicial</option>
                 <option value="Elemental">Elemental</option>
-                <option value="Intermedio">Intermedio</option>
-                <option value="Avanzado">Avanzado</option>
+                <option value="Avanzado 1">Avanzado 1</option>
+                <option value="Avanzado 2">Avanzado 2</option>
+                <option value="Avanzado 3">Avanzado 3</option>
               </select>
 
               {/* Filtrar por profesor */}
