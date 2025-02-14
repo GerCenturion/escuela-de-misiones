@@ -144,7 +144,7 @@ const Registration = () => {
 
   return (
     <div className="container my-5">
-      <h1 className="text-center mb-4">Inscripción</h1>
+      <h1 className="text-center mb-4">Registrarse</h1>
       <form onSubmit={handleSubmit}>
         {/* Nombre */}
         <div className="mb-3">

@@ -22,7 +22,7 @@ const About = () => {
           🎥 <strong>Ver</strong> clases en video y material complementario.
         </li>
         <li>
-          ✅ <strong>Realizar</strong> los exámenes correspondientes.
+          ✍️ <strong>Realizar</strong> los exámenes correspondientes.
         </li>
         <li>
           📊 <strong>Obtener</strong> su nota final basada en el promedio de los
@@ -56,10 +56,10 @@ const About = () => {
       </p>
       <ul className="about-list">
         <li>
-          💵 <strong>$3.000</strong> por estudiante individual.
+          🧍 <strong>$5.000</strong> por estudiante individual.
         </li>
         <li>
-          👫 <strong>$5.000</strong> por matrimonio.
+          👫 <strong>$8.000</strong> por matrimonio.
         </li>
       </ul>
 

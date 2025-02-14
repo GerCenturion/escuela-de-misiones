@@ -17,7 +17,9 @@ const Header = () => {
             alt="Escuela de Misiones"
             style={{ height: "40px", marginRight: "10px" }}
           />
-          <span className="fw-bold">Escuela de Misiones</span>
+          <span className="fw-bold">
+            Seminario Biblico "Escuela de Misiones"
+          </span>
         </Link>
 
         {/* Botón Hamburguesa */}
@@ -63,7 +65,7 @@ const Header = () => {
                 to="/registration"
                 onClick={() => setIsOpen(false)}
               >
-                Inscripción
+                Registrarse
               </Link>
             </li>
 
