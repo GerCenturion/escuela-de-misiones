@@ -181,6 +181,36 @@ const ProfessorMateriaPage = () => {
       return;
     }
 
+    // 📌 Primera confirmación con explicación detallada
+    const confirmacion1 = confirm(
+      "⚠️ ATENCIÓN: Al cerrar esta materia ocurrirá lo siguiente:\n\n" +
+        "✅ Se guardarán las notas finales de los alumnos en la libreta.\n" +
+        "✅ Se deshabilitarán nuevas inscripciones a la materia.\n" +
+        "✅ Se eliminarán todos los exámenes relacionados.\n" +
+        "✅ Se eliminarán todos los archivos y videos asociados.\n" +
+        "✅ Se eliminarán todas las inscripciones de los alumnos.\n\n" +
+        "❌ Esta acción no se puede deshacer.\n\n" +
+        "¿Estás seguro de que quieres continuar?"
+    );
+
+    if (!confirmacion1) {
+      alert("Operación cancelada. La materia no ha sido cerrada.");
+      return;
+    }
+
+    // 📌 Segunda confirmación antes de ejecutar la acción
+    const confirmacion2 = confirm(
+      "⚠️ ¿Estás completamente seguro? Esta acción es irreversible.\n\n" +
+        "Si cierras la materia, se eliminarán los datos mencionados anteriormente.\n" +
+        "Si tienes dudas, consulta con el administrador antes de proceder.\n\n" +
+        "Presiona 'Aceptar' para continuar o 'Cancelar' para abortar."
+    );
+
+    if (!confirmacion2) {
+      alert("Operación cancelada. La materia sigue activa.");
+      return;
+    }
+
     console.log("Cerrando materia con ID:", id); // Depuración
 
     try {
