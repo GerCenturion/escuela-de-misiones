@@ -54,11 +54,13 @@ const MateriaDetalle = () => {
       }
     };
 
+    // 📌 Función para obtener el estado del examen por alumno
     const fetchEstadoExamen = async (examenId) => {
       try {
         console.log(
           `📡 Solicitando estado del examen desde: ${API_URL}/examenes/examenes/${examenId}`
         );
+
         const response = await fetch(
           `${API_URL}/examenes/examenes/${examenId}`,
           {
@@ -76,6 +78,14 @@ const MateriaDetalle = () => {
 
         const data = await response.json();
         console.log("🟢 Estado del examen obtenido:", data);
+
+        // Obtener el ID del usuario autenticado
+        const usuarioId = localStorage.getItem("usuarioId");
+
+        // Encontrar la respuesta específica del usuario autenticado
+        const respuestaUsuario = data.respuestas.find(
+          (resp) => resp.alumno.toString() === usuarioId
+        );
 
         setEstadoExamenes((prev) => ({
           ...prev,
