@@ -4,6 +4,7 @@ import FileUploader from "../components/FileUploader";
 import ExamenForm from "../components/ExamenForm";
 import ExamenesListModal from "../components/ExamenesListModal";
 import VideoManagerModal from "../components/VideoManagerModal";
+import ListaAlumnos from "../components/ListaAlumnos";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams();
@@ -280,7 +281,7 @@ const ProfessorMateriaPage = () => {
         Cerrar Materia
       </button>
 
-      <h2>Alumnos</h2>
+      {/* <h2>Alumnos</h2>
       {error && <div className="alert alert-danger">{error}</div>}
       <ul className="list-group">
         {materia.students.map((student) => (
@@ -323,7 +324,14 @@ const ProfessorMateriaPage = () => {
             </div>
           </li>
         ))}
-      </ul>
+      </ul> */}
+
+      <ListaAlumnos
+        materia={materia} // Objeto con la materia y los alumnos
+        gestionarInscripcion={gestionarInscripcion} // Función para actualizar el estado del alumno
+        error={error} // Mensaje de error si lo hay
+      />
+
       {/* Listado de archivos */}
       <h2 className="mt-4">Archivos Subidos</h2>
       {materia.files.length > 0 ? (

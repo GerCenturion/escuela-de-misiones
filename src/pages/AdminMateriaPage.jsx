@@ -4,6 +4,7 @@ import FileUploader from "../components/FileUploader";
 import ExamenForm from "../components/ExamenForm";
 import ExamenesListModal from "../components/ExamenesListModal";
 import VideoManagerModal from "../components/VideoManagerModal";
+import ListaAlumnos from "../components/ListaAlumnos";
 
 const AdminMateriaPage = () => {
   const { id } = useParams();
@@ -168,6 +169,61 @@ const AdminMateriaPage = () => {
     }
   };
 
+  // Cambiar el estado de inscripción de un alumno
+  const gestionarInscripcion = async (alumnoId, status) => {
+    const currentStatus = materia.students.find(
+      (student) => student.student._id === alumnoId
+    )?.status;
+
+    if (currentStatus === status) {
+      alert("El estado seleccionado ya es el actual.");
+      return;
+    }
+
+    const confirmChange = window.confirm(
+      `¿Estás seguro de que deseas cambiar el estado a "${status}"?`
+    );
+
+    if (!confirmChange) return;
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/materias/gestionar-inscripcion/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ alumnoId, status }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al gestionar la solicitud de inscripción");
+      }
+
+      const data = await response.json();
+      alert(data.message);
+
+      // Recargar los datos de la materia para reflejar los cambios
+
+      setMateria((prevMateria) => ({
+        ...prevMateria,
+        students: prevMateria.students.map((student) =>
+          student.student._id === alumnoId ? { ...student, status } : student
+        ),
+      }));
+    } catch (error) {
+      setError("Error al gestionar la solicitud");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h1>{materia.name}</h1>
@@ -209,23 +265,11 @@ const AdminMateriaPage = () => {
         Cerrar Materia
       </button>
 
-      <h2>Alumnos</h2>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <ul className="list-group">
-        {materia.students.map((student) => (
-          <li
-            key={student.student._id}
-            className="list-group-item d-flex justify-content-between align-items-center"
-          >
-            <div>
-              <p>
-                <strong>{student.student.name}</strong> -{" "}
-                {student.student.email}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <ListaAlumnos
+        materia={materia} // Objeto con la materia y los alumnos
+        gestionarInscripcion={gestionarInscripcion} // Función para actualizar el estado del alumno
+        error={error} // Mensaje de error si lo hay
+      />
 
       {/* Listado de archivos */}
       <h2 className="mt-4">Archivos Subidos</h2>
