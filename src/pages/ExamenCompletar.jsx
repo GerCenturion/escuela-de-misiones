@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaMicrophone, FaStop, FaTrash } from "react-icons/fa";
 
 const ExamenCompletar = () => {
   const { examenId } = useParams();
   const [examen, setExamen] = useState(null);
   const [respuestas, setRespuestas] = useState({});
+  const [grabaciones, setGrabaciones] = useState({});
+  const [mediaRecorder, setMediaRecorder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [yaRespondido, setYaRespondido] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -71,9 +74,60 @@ const ExamenCompletar = () => {
       ...prev,
       [preguntaId]:
         tipo === "multiple-choice"
-          ? { respuestaTexto: valor } // 📌 Guardamos el texto de la opción seleccionada
+          ? { opcionSeleccionada: valor }
           : { respuestaTexto: valor },
     }));
+  };
+
+  const iniciarGrabacion = async (preguntaId) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      let chunks = [];
+
+      recorder.ondataavailable = (event) => chunks.push(event.data);
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: "audio/wav" });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        setGrabaciones((prev) => ({
+          ...prev,
+          [preguntaId]: audioUrl,
+        }));
+
+        setRespuestas((prev) => ({
+          ...prev,
+          [preguntaId]: { respuestaAudio: audioBlob },
+        }));
+      };
+
+      recorder.start();
+      setMediaRecorder({ recorder, preguntaId });
+    } catch (error) {
+      console.error("❌ Error al acceder al micrófono:", error);
+    }
+  };
+
+  const detenerGrabacion = () => {
+    if (mediaRecorder?.recorder) {
+      mediaRecorder.recorder.stop();
+      setMediaRecorder(null);
+    }
+  };
+
+  const eliminarGrabacion = (preguntaId) => {
+    setGrabaciones((prev) => {
+      const nuevoEstado = { ...prev };
+      delete nuevoEstado[preguntaId];
+      return nuevoEstado;
+    });
+
+    setRespuestas((prev) => {
+      const nuevoEstado = { ...prev };
+      delete nuevoEstado[preguntaId];
+      return nuevoEstado;
+    });
   };
 
   const enviarRespuestas = async () => {
@@ -82,36 +136,71 @@ const ExamenCompletar = () => {
       return;
     }
 
+    // 📌 Validar fecha límite
+    if (new Date(examen.fechaLimite) < new Date()) {
+      alert("La fecha límite ha pasado. No puedes completar este examen.");
+      return;
+    }
+
     // 📌 Validar que todas las respuestas están completas
-    const todasRespondidas = examen.preguntas.every(
-      (pregunta) =>
-        respuestas[pregunta._id] && respuestas[pregunta._id].respuestaTexto
-    );
+    const todasRespondidas = examen.preguntas.every((pregunta) => {
+      if (pregunta.tipo === "audio") {
+        return (
+          respuestas[pregunta._id] &&
+          respuestas[pregunta._id].respuestaAudio !== undefined
+        );
+      }
+
+      if (pregunta.tipo === "multiple-choice") {
+        return (
+          respuestas[pregunta._id] &&
+          respuestas[pregunta._id].opcionSeleccionada !== undefined
+        );
+      }
+
+      return (
+        respuestas[pregunta._id] &&
+        respuestas[pregunta._id].respuestaTexto !== undefined &&
+        respuestas[pregunta._id].respuestaTexto.trim() !== ""
+      );
+    });
 
     if (!todasRespondidas) {
       alert("Debes responder todas las preguntas antes de enviar.");
       return;
     }
 
-    try {
-      const formattedRespuestas = Object.entries(respuestas).map(
-        ([preguntaId, respuesta]) => ({
-          preguntaId,
-          ...respuesta, // Contiene `respuestaTexto`
-        })
-      );
+    const formData = new FormData();
+    const formattedRespuestas = [];
 
+    examen.preguntas.forEach((pregunta) => {
+      const respuesta = respuestas[pregunta._id];
+
+      const respuestaFormateada = {
+        preguntaId: pregunta._id, // ✅ Asegurar que preguntaId esté presente
+        respuestaTexto: respuesta?.respuestaTexto || "",
+        opcionSeleccionada: respuesta?.opcionSeleccionada || null,
+      };
+
+      if (pregunta.tipo === "audio" && respuesta?.respuestaAudio) {
+        formData.append("archivoAudio", respuesta.respuestaAudio);
+        respuestaFormateada.respuestaAudio = "archivoAudio";
+      }
+
+      formattedRespuestas.push(respuestaFormateada);
+    });
+
+    formData.append("respuestas", JSON.stringify(formattedRespuestas));
+
+    try {
       console.log("🟢 Enviando respuestas:", formattedRespuestas);
 
       const response = await fetch(
         `${API_URL}/examenes/${examenId}/responder`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ respuestas: formattedRespuestas }),
+          headers: { Authorization: `Bearer ${token}` }, // FormData maneja el Content-Type automáticamente
+          body: formData,
         }
       );
 
@@ -133,98 +222,97 @@ const ExamenCompletar = () => {
     return <p>Error al cargar el examen. Verifica la consola.</p>;
   }
 
-  // Extraer información de la corrección si existe
-  const respuestaAlumno = examen.respuestas?.[0] || {};
-  const estaCorregido = respuestaAlumno.corregido || false;
-  const totalPuntuacion = respuestaAlumno.totalPuntuacion ?? "Pendiente";
-
-  // Determinar el estado del examen
-  let mensajeNota = "🕒 Esperando corrección...";
-  let colorTexto = "text-primary"; // Azul para corrección pendiente
-
-  if (estaCorregido) {
-    if (totalPuntuacion > 5) {
-      mensajeNota = `✅ Tu nota es: ${totalPuntuacion}`;
-      colorTexto = "text-success"; // Verde si aprobó
-    } else {
-      mensajeNota = `❌ Tu nota es: ${totalPuntuacion}`;
-      colorTexto = "text-danger"; // Rojo si desaprobó
-    }
-  }
-
   return (
     <div className="container mt-4">
       <h2>{examen.titulo}</h2>
       <p>Materia: {examen.materia?.name || "No especificada"}</p>
 
-      {yaRespondido ? (
-        <div className="alert alert-info">
-          <p>Ya has completado este examen. No puedes volver a responderlo.</p>
-          <h4 className={colorTexto}>{mensajeNota}</h4>
-        </div>
-      ) : (
-        <form>
-          {examen.preguntas.map((pregunta) => (
-            <div
-              key={pregunta._id}
-              className="mb-3"
-            >
-              <label className="form-label">
-                {pregunta.texto}{" "}
-                <strong>(Puntos: {pregunta.puntuacion})</strong>
-              </label>
-              {pregunta.tipo === "multiple-choice" ? (
-                <div>
-                  {pregunta.opciones.map((opcion) => (
-                    <div
-                      key={opcion._id}
-                      className="form-check"
-                    >
-                      <input
-                        type="radio"
-                        id={`opcion-${opcion._id}`}
-                        name={`pregunta-${pregunta._id}`}
-                        value={opcion.texto}
-                        className="form-check-input"
-                        onChange={(e) =>
-                          manejarCambio(
-                            pregunta._id,
-                            e.target.value,
-                            "multiple-choice"
-                          )
-                        }
-                      />
-                      <label
-                        htmlFor={`opcion-${opcion._id}`}
-                        className="form-check-label"
-                      >
-                        {opcion.texto}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  className="form-control"
-                  value={respuestas[pregunta._id]?.respuestaTexto || ""}
-                  onChange={(e) =>
-                    manejarCambio(pregunta._id, e.target.value, "desarrollo")
-                  }
-                />
-              )}
-            </div>
-          ))}
-
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={enviarRespuestas}
+      <form>
+        {examen.preguntas.map((pregunta) => (
+          <div
+            key={pregunta._id}
+            className="mb-3"
           >
-            Enviar Respuestas
-          </button>
-        </form>
-      )}
+            <label className="form-label">
+              {pregunta.texto} <strong>(Puntos: {pregunta.puntuacion})</strong>
+            </label>
+
+            {pregunta.tipo === "multiple-choice" ? (
+              <div>
+                {pregunta.opciones.map((opcion) => (
+                  <div
+                    key={opcion._id}
+                    className="form-check"
+                  >
+                    <input
+                      type="radio"
+                      name={`pregunta-${pregunta._id}`}
+                      value={opcion._id}
+                      className="form-check-input"
+                      onChange={(e) =>
+                        manejarCambio(
+                          pregunta._id,
+                          e.target.value,
+                          "multiple-choice"
+                        )
+                      }
+                    />
+                    <label className="form-check-label">{opcion.texto}</label>
+                  </div>
+                ))}
+              </div>
+            ) : pregunta.tipo === "audio" ? (
+              <div>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={() => iniciarGrabacion(pregunta._id)}
+                >
+                  <FaMicrophone />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={detenerGrabacion}
+                >
+                  <FaStop />
+                </button>
+                {grabaciones[pregunta._id] && (
+                  <>
+                    <audio
+                      controls
+                      src={grabaciones[pregunta._id]}
+                      className="mx-2"
+                    />
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() => eliminarGrabacion(pregunta._id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <input
+                type="text"
+                className="form-control"
+                onChange={(e) =>
+                  manejarCambio(pregunta._id, e.target.value, "desarrollo")
+                }
+              />
+            )}
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={enviarRespuestas}
+        >
+          Enviar Respuestas
+        </button>
+      </form>
     </div>
   );
 };

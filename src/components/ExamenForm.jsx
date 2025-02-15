@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 const ExamenForm = ({ materiaId, onClose }) => {
   const [titulo, setTitulo] = useState("");
+  const [fechaLimite, setFechaLimite] = useState("");
   const [preguntas, setPreguntas] = useState([
     { texto: "", tipo: "desarrollo", opciones: [], puntuacion: "" },
   ]);
@@ -67,6 +68,11 @@ const ExamenForm = ({ materiaId, onClose }) => {
       return;
     }
 
+    if (!fechaLimite) {
+      alert("La fecha límite es obligatoria.");
+      return;
+    }
+
     if (totalPuntos !== 10) {
       alert("La suma total de los puntos debe ser exactamente 10.");
       return;
@@ -79,10 +85,18 @@ const ExamenForm = ({ materiaId, onClose }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ materia: materiaId, titulo, preguntas }),
+        body: JSON.stringify({
+          materia: materiaId,
+          titulo,
+          fechaLimite, // ✅ Agregamos la fecha límite
+          preguntas,
+        }),
       });
 
-      if (!response.ok) throw new Error("Error al crear el examen");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error al crear el examen: ${errorText}`);
+      }
 
       alert("Examen creado con éxito");
       setPreguntas([
@@ -91,7 +105,8 @@ const ExamenForm = ({ materiaId, onClose }) => {
       setTitulo("");
       onClose();
     } catch (error) {
-      console.error("Error:", error);
+      console.error("❌ Error al crear el examen:", error);
+      alert("Hubo un problema al crear el examen.");
     }
   };
 
@@ -115,7 +130,14 @@ const ExamenForm = ({ materiaId, onClose }) => {
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
           />
-
+          {/* Campo para la fecha límite */}
+          <label>Fecha Límite</label>
+          <input
+            type="datetime-local"
+            className="form-control"
+            value={fechaLimite}
+            onChange={(e) => setFechaLimite(e.target.value)}
+          />
           <p>
             <strong>Puntos asignados:</strong> {totalPuntos} / 10
           </p>
@@ -144,6 +166,7 @@ const ExamenForm = ({ materiaId, onClose }) => {
               >
                 <option value="desarrollo">Desarrollo</option>
                 <option value="multiple-choice">Multiple Choice</option>
+                <option value="audio">Audio</option>
               </select>
 
               {pregunta.tipo === "multiple-choice" && (

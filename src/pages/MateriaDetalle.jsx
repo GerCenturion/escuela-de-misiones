@@ -120,7 +120,7 @@ const MateriaDetalle = () => {
         className="btn btn-secondary mb-4"
         onClick={() => navigate("/dashboard")}
       >
-        Volver al Dashboard
+        Volver
       </button>
 
       <h1>{materia.name}</h1>
