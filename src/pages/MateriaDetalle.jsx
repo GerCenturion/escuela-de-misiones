@@ -14,13 +14,13 @@ const MateriaDetalle = () => {
   const usuarioId = localStorage.getItem("usuarioId");
 
   useEffect(() => {
-    if (!usuarioId) {
-      console.warn(
-        "⚠️ usuarioId no encontrado en localStorage. Redirigiendo al login..."
-      );
-      navigate("/login"); // Redirigir al login si no hay usuarioId
-      return;
-    }
+    // if (!usuarioId) {
+    //   console.warn(
+    //     "⚠️ usuarioId no encontrado en localStorage. Redirigiendo al login..."
+    //   );
+    //   navigate("/login"); // Redirigir al login si no hay usuarioId
+    //   return;
+    // }
 
     const fetchMateria = async () => {
       try {
