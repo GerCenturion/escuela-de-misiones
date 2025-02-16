@@ -55,16 +55,14 @@ const ExamenRevisar = () => {
         Volver
       </button>
       <h1>Revisión del Examen: {examen.titulo}</h1>
-      <h3>
-        Nota Final: {examen.respuestas[0]?.totalPuntuacion ?? "Pendiente"} / 10
-      </h3>
 
-      <h2 className="mt-4">Preguntas y Puntos Obtenidos</h2>
+      <h2 className="mt-4">Preguntas</h2>
       <ul className="list-group">
         {examen.preguntas.map((pregunta, index) => {
-          const respuestaAlumno = examen.respuestas[0]?.respuestas.find(
-            (r) => r.preguntaId === pregunta._id
-          );
+          const respuestaAlumno = examen.respuestas
+            .flatMap((resp) => resp.respuestas) // Buscar en todas las respuestas
+            .find((r) => r.preguntaId === pregunta._id);
+
           return (
             <li
               key={index}
@@ -72,13 +70,65 @@ const ExamenRevisar = () => {
             >
               <strong>{pregunta.texto}</strong>
               <p>
-                Respuesta del alumno:{" "}
+                <strong>Respuesta del alumno:</strong>{" "}
                 {respuestaAlumno?.respuestaTexto ?? "No respondida"}
               </p>
-              <span className="badge bg-info">
-                Puntos: {respuestaAlumno?.puntuacionObtenida ?? 0} /{" "}
-                {pregunta.puntuacion}
-              </span>
+
+              {/* Mostrar todas las opciones si la pregunta es multiple-choice */}
+              {pregunta.tipo === "multiple-choice" && (
+                <div>
+                  <p>
+                    <strong>Opciones:</strong>
+                  </p>
+                  <ul>
+                    {pregunta.opciones.map((opcion) => (
+                      <li
+                        key={opcion._id}
+                        style={{
+                          fontWeight:
+                            opcion._id === respuestaAlumno?.opcionSeleccionada
+                              ? "bold"
+                              : "normal",
+                          color:
+                            opcion._id === respuestaAlumno?.opcionSeleccionada
+                              ? "green"
+                              : "black",
+                        }}
+                      >
+                        {opcion.texto}{" "}
+                        {opcion._id === respuestaAlumno?.opcionSeleccionada
+                          ? "✔️ (Seleccionada)"
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Mostrar audio si la pregunta es de tipo audio */}
+              {pregunta.tipo === "audio" &&
+                respuestaAlumno?.respuestaAudioUrl && (
+                  <p>
+                    <strong>Respuesta en audio:</strong>{" "}
+                    <audio controls>
+                      <source
+                        src={respuestaAlumno.respuestaAudioUrl}
+                        type="audio/mpeg"
+                      />
+                      Tu navegador no soporta la reproducción de audio.
+                    </audio>
+                  </p>
+                )}
+
+              {/* Mostrar estado de la pregunta (Aprobado/Rehacer) */}
+              {respuestaAlumno?.estado && (
+                <p>
+                  <strong>Estado:</strong>{" "}
+                  {respuestaAlumno.estado === "aprobado"
+                    ? "✔️ Aprobado"
+                    : "❌ Rehacer"}
+                </p>
+              )}
             </li>
           );
         })}

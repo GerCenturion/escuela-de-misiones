@@ -6,7 +6,6 @@ const CorregirExamen = () => {
   const { examenId } = useParams();
   const [examen, setExamen] = useState(null);
   const navigate = useNavigate();
-  const [modoRevision, setModoRevision] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
 
@@ -41,26 +40,32 @@ const CorregirExamen = () => {
 
   const enviarCorrecciones = async (alumnoId, respuestas) => {
     try {
-      console.log("📤 Enviando correcciones para el alumno:", alumnoId);
+      const correcciones = respuestas.map((r) => ({
+        preguntaId: r.preguntaId,
+        estado: r.estado, // "aprobado" o "rehacer"
+      }));
+
+      console.log("📤 Enviando correcciones:", correcciones); // Debug en consola
+
       const response = await fetch(
         `${API_URL}/examenes/${examenId}/corregir/${alumnoId}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ respuestas }),
+          body: JSON.stringify({ correcciones }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Error al enviar las correcciones.");
+        const errorText = await response.text();
+        throw new Error(`Error en la respuesta del servidor: ${errorText}`);
       }
 
       alert("✅ Correcciones enviadas con éxito.");
-      setModoRevision(false); // Salir del modo revisión
-      window.location.reload(); // 🔄 Recargar la página para ver los cambios
+      window.location.reload();
     } catch (error) {
       console.error("❌ Error al enviar correcciones:", error);
       alert("Hubo un problema al enviar las correcciones.");

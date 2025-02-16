@@ -4,55 +4,32 @@ const ExamenForm = ({ materiaId, onClose }) => {
   const [titulo, setTitulo] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
   const [preguntas, setPreguntas] = useState([
-    { texto: "", tipo: "desarrollo", opciones: [], puntuacion: "" },
+    { texto: "", tipo: "desarrollo", opciones: [] },
   ]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  const totalPuntos = preguntas.reduce(
-    (sum, pregunta) => sum + (pregunta.puntuacion || 0),
-    0
-  );
-
   const agregarPregunta = () => {
-    if (totalPuntos >= 10) {
-      alert(
-        "No puedes agregar más preguntas, ya alcanzaste el límite de 10 puntos."
-      );
-      return;
-    }
     setPreguntas([
       ...preguntas,
-      { texto: "", tipo: "desarrollo", opciones: [], puntuacion: 0 },
+      { texto: "", tipo: "desarrollo", opciones: [] },
     ]);
   };
 
   const actualizarPregunta = (index, campo, valor) => {
     const nuevasPreguntas = [...preguntas];
-
-    if (campo === "puntuacion") {
-      const nuevoTotal =
-        totalPuntos - (nuevasPreguntas[index].puntuacion || 0) + Number(valor);
-      if (nuevoTotal > 10) {
-        alert("La suma total de puntos no puede ser mayor que 10.");
-        return;
-      }
-    }
-
-    nuevasPreguntas[index][campo] =
-      campo === "puntuacion" ? Number(valor) : valor;
+    nuevasPreguntas[index][campo] = valor;
     setPreguntas(nuevasPreguntas);
   };
 
   const agregarOpcion = (index) => {
     const nuevasPreguntas = [...preguntas];
-    nuevasPreguntas[index].opciones.push({ texto: "", puntuacion: 0 });
+    nuevasPreguntas[index].opciones.push({ texto: "" });
     setPreguntas(nuevasPreguntas);
   };
 
   const actualizarOpcion = (pIndex, oIndex, campo, valor) => {
     const nuevasPreguntas = [...preguntas];
-    nuevasPreguntas[pIndex].opciones[oIndex][campo] =
-      campo === "puntuacion" ? Number(valor) : valor;
+    nuevasPreguntas[pIndex].opciones[oIndex][campo] = valor;
     setPreguntas(nuevasPreguntas);
   };
 
@@ -73,11 +50,6 @@ const ExamenForm = ({ materiaId, onClose }) => {
       return;
     }
 
-    if (totalPuntos !== 10) {
-      alert("La suma total de los puntos debe ser exactamente 10.");
-      return;
-    }
-
     try {
       const response = await fetch(`${API_URL}/examenes/crear`, {
         method: "POST",
@@ -88,7 +60,7 @@ const ExamenForm = ({ materiaId, onClose }) => {
         body: JSON.stringify({
           materia: materiaId,
           titulo,
-          fechaLimite, // ✅ Agregamos la fecha límite
+          fechaLimite,
           preguntas,
         }),
       });
@@ -99,9 +71,7 @@ const ExamenForm = ({ materiaId, onClose }) => {
       }
 
       alert("Examen creado con éxito");
-      setPreguntas([
-        { texto: "", tipo: "desarrollo", opciones: [], puntuacion: 0 },
-      ]);
+      setPreguntas([{ texto: "", tipo: "desarrollo", opciones: [] }]);
       setTitulo("");
       onClose();
     } catch (error) {
@@ -138,9 +108,6 @@ const ExamenForm = ({ materiaId, onClose }) => {
             value={fechaLimite}
             onChange={(e) => setFechaLimite(e.target.value)}
           />
-          <p>
-            <strong>Puntos asignados:</strong> {totalPuntos} / 10
-          </p>
 
           {preguntas.map((pregunta, index) => (
             <div
@@ -207,19 +174,6 @@ const ExamenForm = ({ materiaId, onClose }) => {
                   </button>
                 </div>
               )}
-
-              <label>Puntos</label>
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Puntos"
-                value={pregunta.puntuacion}
-                min="0"
-                max="10"
-                onChange={(e) =>
-                  actualizarPregunta(index, "puntuacion", e.target.value)
-                }
-              />
             </div>
           ))}
         </div>
@@ -232,7 +186,6 @@ const ExamenForm = ({ materiaId, onClose }) => {
         <button
           className="btn btn-success"
           onClick={enviarExamen}
-          disabled={totalPuntos !== 10}
         >
           Enviar Examen
         </button>

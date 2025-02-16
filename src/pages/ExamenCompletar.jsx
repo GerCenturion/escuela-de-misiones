@@ -233,9 +233,7 @@ const ExamenCompletar = () => {
             key={pregunta._id}
             className="mb-3"
           >
-            <label className="form-label">
-              {pregunta.texto} <strong>(Puntos: {pregunta.puntuacion})</strong>
-            </label>
+            <label className="form-label">{pregunta.texto}</label>
 
             {pregunta.tipo === "multiple-choice" ? (
               <div>
