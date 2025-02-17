@@ -5,6 +5,7 @@ import ExamenForm from "../components/ExamenForm";
 import ExamenesListModal from "../components/ExamenesListModal";
 import VideoManagerModal from "../components/VideoManagerModal";
 import ListaAlumnos from "../components/ListaAlumnos";
+import Spinner from "../components/Spinner";
 
 const AdminMateriaPage = () => {
   const { id } = useParams();
@@ -188,6 +189,7 @@ const AdminMateriaPage = () => {
 
     setLoading(true);
 
+    if (loading) return <Spinner />;
     try {
       const response = await fetch(
         `${API_URL}/materias/gestionar-inscripcion/${id}`,
@@ -223,6 +225,8 @@ const AdminMateriaPage = () => {
       setLoading(false);
     }
   };
+
+  if (loading) return <Spinner />;
 
   return (
     <div className="container mt-5">

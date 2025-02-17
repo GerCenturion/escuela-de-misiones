@@ -4,6 +4,7 @@ import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
 import LibretasPage from "../components/LibretasPage";
 import "../Dashboard.css";
+import Spinner from "../components/Spinner";
 
 const AdminDashboard = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -15,6 +16,7 @@ const AdminDashboard = () => {
   const [professorFilter, setProfessorFilter] = useState("");
   const [enrollmentFilter, setEnrollmentFilter] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true); // 📌 Estado para el Spinner
   const [userData, setUserData] = useState(null);
   const [activeSection, setActiveSection] = useState("usuarios");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
@@ -81,12 +83,16 @@ const AdminDashboard = () => {
       } catch (error) {
         setError("Error al cargar materias");
         console.error(error);
+      } finally {
+        setLoading(false); // 📌 Ocultar Spinner cuando los datos estén listos
       }
     };
 
     fetchUsuarios();
     fetchMaterias();
   }, [token, navigate]);
+
+  if (loading) return <Spinner />;
 
   const handleDeleteMateria = async (id) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta materia?")) {

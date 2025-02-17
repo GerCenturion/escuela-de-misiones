@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaMicrophone, FaStop, FaTrash } from "react-icons/fa";
+import Spinner from "../components/Spinner";
 
 const ExamenCompletar = () => {
   const { examenId } = useParams();
@@ -198,7 +199,8 @@ const ExamenCompletar = () => {
   };
 
   if (!examen) {
-    return <p>Cargando examen...</p>;
+    return <Spinner />;
+    // return <p>Cargando examen...</p>;
   }
 
   return (

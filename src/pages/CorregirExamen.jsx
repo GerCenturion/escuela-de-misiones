@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ExamenItem from "../components/ExamenItem";
+import Spinner from "../components/Spinner";
 
 const CorregirExamen = () => {
   const { examenId } = useParams();
@@ -73,7 +74,7 @@ const CorregirExamen = () => {
   };
 
   if (!examen) {
-    return <p>Cargando examen...</p>;
+    return <Spinner />;
   }
 
   return (
