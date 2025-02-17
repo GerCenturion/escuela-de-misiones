@@ -67,19 +67,21 @@ const ExamenesListModal = ({ materiaId, onClose }) => {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <span>{examen.titulo || `Examen #${examen._id}`}</span>
-              <button
-                className="btn btn-primary btn-sm me-2"
-                onClick={() => navigate(`/corregir/${examen._id}`)}
-              >
-                Corregir
-              </button>
+              <div className="d-flex gap-2 justify-content-end">
+                <button
+                  className="btn btn-primary btn-sm me-2"
+                  onClick={() => navigate(`/corregir/${examen._id}`)}
+                >
+                  Corregir
+                </button>
 
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={() => eliminarExamen(examen._id)}
-              >
-                Eliminar
-              </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => eliminarExamen(examen._id)}
+                >
+                  Eliminar
+                </button>
+              </div>
             </li>
           ))}
         </ul>

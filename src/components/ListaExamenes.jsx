@@ -1,21 +1,46 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
+const ListaExamenes = ({ examenes, API_URL, token }) => {
   const [estadoExamenes, setEstadoExamenes] = useState({});
+  const [usuarioId, setUsuarioId] = useState(null);
   const navigate = useNavigate();
 
+  // ✅ Obtener usuarioId desde el backend
+  useEffect(() => {
+    const fetchUsuario = async () => {
+      try {
+        console.log("📡 Solicitando datos del usuario...");
+        const response = await fetch(`${API_URL}/usuarios/me`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al obtener usuario: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("🟢 Usuario obtenido:", data);
+        setUsuarioId(data._id);
+      } catch (error) {
+        console.error("❌ Error al obtener usuario:", error);
+      }
+    };
+
+    fetchUsuario();
+  }, [API_URL, token]);
+
+  // ✅ Obtener estados de los exámenes
   useEffect(() => {
     if (!usuarioId) {
-      console.error("❌ usuarioId no encontrado. No se puede continuar.");
+      console.warn("⚠️ Esperando usuarioId...");
       return;
     }
 
     const fetchEstadoExamen = async (examenId) => {
       try {
-        console.log(
-          `📡 Solicitando estado del examen desde: ${API_URL}/examenes/${examenId}/estado-detallado/${usuarioId}`
-        );
+        console.log(`📡 Solicitando estado del examen: ${examenId}`);
 
         const response = await fetch(
           `${API_URL}/examenes/${examenId}/estado-detallado/${usuarioId}`,
@@ -34,18 +59,31 @@ const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
 
         let estadoTexto = "⏳ Pendiente";
         let estadoClase = "badge bg-secondary";
+        let estadoBoton = "Realizar Examen";
+        let accionBoton = () => navigate(`/examen/${examenId}`);
+        let botonDeshabilitado = false;
 
         if (data.completado) {
           if (data.corregido) {
-            estadoTexto =
-              data.estadoGeneral === "aprobado" ? "✔️ Aprobado" : "❌ Rehacer";
-            estadoClase =
-              data.estadoGeneral === "aprobado"
-                ? "badge bg-success"
-                : "badge bg-danger";
+            if (data.estadoGeneral === "aprobado") {
+              estadoTexto = "✔️ Aprobado";
+              estadoClase = "badge bg-success";
+              estadoBoton = "Ver Detalles";
+              accionBoton = () =>
+                navigate(`/revisar-examen/${examenId}`, {
+                  state: { usuarioId, token },
+                });
+            } else {
+              estadoTexto = "❌ Rehacer";
+              estadoClase = "badge bg-danger";
+              estadoBoton = "Rehacer Examen";
+              accionBoton = () => navigate(`/examen/${examenId}`);
+            }
           } else {
-            estadoTexto = "🕒 Esperando corrección...";
+            estadoTexto = "🕒 Realizado - Esperando Corrección";
             estadoClase = "badge bg-warning text-dark";
+            estadoBoton = "Esperando Corrección";
+            botonDeshabilitado = true;
           }
         }
 
@@ -57,6 +95,9 @@ const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
             estado: data.estadoGeneral,
             estadoTexto,
             estadoClase,
+            estadoBoton,
+            accionBoton,
+            botonDeshabilitado,
             fechaLimite: data.fechaLimite || "No especificada",
           },
         }));
@@ -70,6 +111,10 @@ const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
     });
   }, [examenes, API_URL, token, usuarioId]);
 
+  if (!usuarioId) {
+    return <p className="text-warning">Cargando datos del usuario...</p>;
+  }
+
   return (
     <div>
       <h2 className="mt-4">Exámenes</h2>
@@ -77,7 +122,6 @@ const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
         <ul className="list-group">
           {examenes.map((examen) => {
             const estado = estadoExamenes[examen._id] || {};
-            const mostrarBoton = !estado.completado;
 
             return (
               <li
@@ -92,34 +136,25 @@ const ListaExamenes = ({ examenes, API_URL, token, usuarioId }) => {
                   </p>
                 </div>
 
-                {/* Mostrar estado con colores */}
+                {/* Estado del examen con colores */}
                 <span className={`badge ${estado.estadoClase}`}>
                   {estado.estadoTexto}
                 </span>
 
-                {/* Botón para ver el examen corregido */}
-                {estado.completado && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() =>
-                      navigate(`/revisar-examen/${examen._id}`, {
-                        state: { usuarioId, token }, // 🔥 Pasando usuarioId y token como estado
-                      })
-                    }
-                  >
-                    Ver Detalles
-                  </button>
-                )}
-
-                {/* Botón para realizar el examen si aún no se ha hecho */}
-                {mostrarBoton && (
-                  <button
-                    className="btn btn-info btn-sm"
-                    onClick={() => navigate(`/examen/${examen._id}`)}
-                  >
-                    Realizar Examen
-                  </button>
-                )}
+                {/* Botón con estado dinámico */}
+                <button
+                  className="btn btn-sm"
+                  onClick={estado.accionBoton}
+                  disabled={estado.botonDeshabilitado}
+                  style={{
+                    backgroundColor: estado.botonDeshabilitado
+                      ? "#ccc"
+                      : "#007bff",
+                    color: "white",
+                  }}
+                >
+                  {estado.estadoBoton}
+                </button>
               </li>
             );
           })}

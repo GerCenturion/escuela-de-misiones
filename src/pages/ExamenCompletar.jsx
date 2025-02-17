@@ -1,46 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaMicrophone, FaStop, FaTrash } from "react-icons/fa";
 
 const ExamenCompletar = () => {
   const { examenId } = useParams();
   const [examen, setExamen] = useState(null);
+  const [yaRespondido, setYaRespondido] = useState(false);
   const [respuestas, setRespuestas] = useState({});
   const [grabaciones, setGrabaciones] = useState({});
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [yaRespondido, setYaRespondido] = useState(false);
+  const [grabandoPregunta, setGrabandoPregunta] = useState(null); // ✅ Control de grabación
+  const mediaRecorderRef = useRef(null); // ✅ Se usa un ref para MediaRecorder
+  const audioStreamRef = useRef(null); // ✅ Se usa un ref para el stream de audio
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
-    const verificarSiYaRespondio = async () => {
-      try {
-        console.log("🔍 Verificando si el alumno ya completó el examen...");
-        const response = await fetch(
-          `${API_URL}/examenes/${examenId}/completado`,
-          {
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("No se pudo verificar el estado del examen");
-        }
-
-        const data = await response.json();
-        console.log("🟢 Estado del examen:", data);
-        setYaRespondido(data.yaRespondido);
-      } catch (error) {
-        console.error("❌ Error al verificar el examen:", error);
-      }
-    };
-
     const fetchExamen = async () => {
       try {
-        console.log("🟢 Solicitando examen con ID:", examenId);
+        console.log("📡 Solicitando examen con ID:", examenId);
         const response = await fetch(
           `${API_URL}/examenes/examenes/${examenId}`,
           {
@@ -58,30 +36,18 @@ const ExamenCompletar = () => {
         setExamen(data);
       } catch (error) {
         console.error("❌ Error al obtener el examen:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    if (examenId) {
-      verificarSiYaRespondio();
-      fetchExamen();
-    }
+    fetchExamen();
   }, [examenId, token]);
 
-  const manejarCambio = (preguntaId, valor, tipo) => {
-    setRespuestas((prev) => ({
-      ...prev,
-      [preguntaId]:
-        tipo === "multiple-choice"
-          ? { opcionSeleccionada: valor }
-          : { respuestaTexto: valor },
-    }));
-  };
-
   const iniciarGrabacion = async (preguntaId) => {
+    if (grabandoPregunta) return; // ✅ Evita múltiples grabaciones simultáneas
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream; // ✅ Guardar referencia al stream
       const recorder = new MediaRecorder(stream);
       let chunks = [];
 
@@ -100,19 +66,25 @@ const ExamenCompletar = () => {
           ...prev,
           [preguntaId]: { respuestaAudio: audioBlob },
         }));
+
+        setGrabandoPregunta(null); // ✅ Habilitar otros micrófonos
+
+        // ✅ Detener el stream del micrófono para liberar recursos
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       recorder.start();
-      setMediaRecorder({ recorder, preguntaId });
+      mediaRecorderRef.current = recorder; // ✅ Guardar el MediaRecorder
+      setGrabandoPregunta(preguntaId); // ✅ Marcar la pregunta en grabación
     } catch (error) {
       console.error("❌ Error al acceder al micrófono:", error);
     }
   };
 
   const detenerGrabacion = () => {
-    if (mediaRecorder?.recorder) {
-      mediaRecorder.recorder.stop();
-      setMediaRecorder(null);
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop(); // ✅ Detiene correctamente la grabación
+      mediaRecorderRef.current = null;
     }
   };
 
@@ -172,34 +144,45 @@ const ExamenCompletar = () => {
 
     const formData = new FormData();
     const formattedRespuestas = [];
+    let archivosAudio = [];
 
     examen.preguntas.forEach((pregunta) => {
       const respuesta = respuestas[pregunta._id];
 
       const respuestaFormateada = {
-        preguntaId: pregunta._id, // ✅ Asegurar que preguntaId esté presente
+        preguntaId: pregunta._id,
         respuestaTexto: respuesta?.respuestaTexto || "",
         opcionSeleccionada: respuesta?.opcionSeleccionada || null,
       };
 
+      // 📌 Si la pregunta es de tipo "audio", agregar archivo con nombre correcto
       if (pregunta.tipo === "audio" && respuesta?.respuestaAudio) {
-        formData.append("archivoAudio", respuesta.respuestaAudio);
-        respuestaFormateada.respuestaAudio = "archivoAudio";
+        archivosAudio.push({
+          archivo: respuesta.respuestaAudio,
+          nombre: `audio_${pregunta._id}.wav`, // 📌 Nombre correcto
+        });
       }
 
       formattedRespuestas.push(respuestaFormateada);
     });
 
+    // 📌 Agregar respuestas JSON al formData
     formData.append("respuestas", JSON.stringify(formattedRespuestas));
+
+    // 📌 Agregar archivos de audio con la clave correcta y nombre correcto
+    archivosAudio.forEach(({ archivo, nombre }) => {
+      formData.append("archivoAudio", archivo, nombre);
+    });
 
     try {
       console.log("🟢 Enviando respuestas:", formattedRespuestas);
+      console.log("🟢 Enviando archivos de audio:", archivosAudio);
 
       const response = await fetch(
         `${API_URL}/examenes/${examenId}/responder`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` }, // FormData maneja el Content-Type automáticamente
+          headers: { Authorization: `Bearer ${token}` }, // 📌 NO agregar `Content-Type`
           body: formData,
         }
       );
@@ -214,12 +197,8 @@ const ExamenCompletar = () => {
     }
   };
 
-  if (loading) {
-    return <p>Cargando examen...</p>;
-  }
-
   if (!examen) {
-    return <p>Error al cargar el examen. Verifica la consola.</p>;
+    return <p>Cargando examen...</p>;
   }
 
   return (
@@ -248,11 +227,12 @@ const ExamenCompletar = () => {
                       value={opcion._id}
                       className="form-check-input"
                       onChange={(e) =>
-                        manejarCambio(
-                          pregunta._id,
-                          e.target.value,
-                          "multiple-choice"
-                        )
+                        setRespuestas((prev) => ({
+                          ...prev,
+                          [pregunta._id]: {
+                            opcionSeleccionada: e.target.value,
+                          },
+                        }))
                       }
                     />
                     <label className="form-check-label">{opcion.texto}</label>
@@ -261,20 +241,31 @@ const ExamenCompletar = () => {
               </div>
             ) : pregunta.tipo === "audio" ? (
               <div>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => iniciarGrabacion(pregunta._id)}
-                >
-                  <FaMicrophone />
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={detenerGrabacion}
-                >
-                  <FaStop />
-                </button>
+                {/* ✅ Oculta otros micrófonos si ya hay una grabación en curso */}
+                {grabandoPregunta &&
+                grabandoPregunta !== pregunta._id ? null : (
+                  <>
+                    {grabandoPregunta === pregunta._id ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={detenerGrabacion}
+                      >
+                        <FaStop /> Detener
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => iniciarGrabacion(pregunta._id)}
+                      >
+                        <FaMicrophone /> Grabar
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* ✅ Mostrar audio grabado y botón de eliminar si hay grabación */}
                 {grabaciones[pregunta._id] && (
                   <>
                     <audio
@@ -296,7 +287,10 @@ const ExamenCompletar = () => {
                 type="text"
                 className="form-control"
                 onChange={(e) =>
-                  manejarCambio(pregunta._id, e.target.value, "desarrollo")
+                  setRespuestas((prev) => ({
+                    ...prev,
+                    [pregunta._id]: { respuestaTexto: e.target.value },
+                  }))
                 }
               />
             )}

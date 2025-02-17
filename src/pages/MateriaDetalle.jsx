@@ -5,23 +5,25 @@ import ListaExamenes from "../components/ListaExamenes";
 
 const MateriaDetalle = () => {
   const { id } = useParams();
+  const userId = location.state?.userId || null;
   const navigate = useNavigate();
   const [materia, setMateria] = useState(null);
   const [examenes, setExamenes] = useState([]);
   const [error, setError] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
-  const usuarioId = localStorage.getItem("usuarioId");
+  const [usuarioId, setUsuarioId] = useState(
+    localStorage.getItem("usuarioId") || null
+  );
 
   useEffect(() => {
-    // if (!usuarioId) {
-    //   console.warn(
-    //     "⚠️ usuarioId no encontrado en localStorage. Redirigiendo al login..."
-    //   );
-    //   navigate("/login"); // Redirigir al login si no hay usuarioId
-    //   return;
-    // }
+    if (!usuarioId && userId) {
+      setUsuarioId(userId);
+      localStorage.setItem("usuarioId", userId); // 🔥 Guarda el ID en localStorage para persistencia
+    }
+  }, [userId, usuarioId]);
 
+  useEffect(() => {
     const fetchMateria = async () => {
       try {
         console.log(

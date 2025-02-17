@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState(null);
   const [availableMaterias, setAvailableMaterias] = useState([]);
   const [inscriptionStatus, setInscriptionStatus] = useState({});
+  const sidebarRef = useRef(null);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -200,6 +201,7 @@ const Dashboard = () => {
               {availableMaterias.map((materia) => {
                 const estadoInscripcion =
                   inscriptionStatus[materia._id] || "No Inscrito";
+                const userId = userData?._id; // 🔥 Extraemos el userId de userData
 
                 return (
                   <div
@@ -231,6 +233,7 @@ const Dashboard = () => {
                       {estadoInscripcion === "Aceptado" ? (
                         <Link
                           to={`/materia/${materia._id}`}
+                          state={{ userId }} // 🔥 Pasamos userId como estado
                           className="btn-materia"
                         >
                           Acceder
