@@ -104,7 +104,7 @@ const AdminMateriaPage = () => {
   };
 
   if (!materia) {
-    return <div>Cargando materia...</div>;
+    return <Spinner />;
   }
 
   const cerrarMateria = async () => {

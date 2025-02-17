@@ -5,6 +5,7 @@ import ExamenForm from "../components/ExamenForm";
 import ExamenesListModal from "../components/ExamenesListModal";
 import VideoManagerModal from "../components/VideoManagerModal";
 import ListaAlumnos from "../components/ListaAlumnos";
+import Spinner from "../components/Spinner";
 
 const ProfessorMateriaPage = () => {
   const { id } = useParams();
@@ -174,7 +175,7 @@ const ProfessorMateriaPage = () => {
   };
 
   if (!materia) {
-    return <div>Cargando materia...</div>;
+    return <Spinner />;
   }
   const cerrarMateria = async () => {
     if (!id) {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "../components/VideoPlayer";
 import ListaExamenes from "../components/ListaExamenes";
+import Spinner from "../components/Spinner";
 
 const MateriaDetalle = () => {
   const { id } = useParams();
@@ -56,9 +57,7 @@ const MateriaDetalle = () => {
   }
 
   if (!materia) {
-    return (
-      <div className="text-center">Cargando información de la materia...</div>
-    );
+    return <Spinner />;
   }
 
   return (

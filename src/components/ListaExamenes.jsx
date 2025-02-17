@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import RehacerExamen from "../pages/RehacerExamen";
+import Spinner from "./Spinner";
 
 const ListaExamenes = ({ examenes, API_URL, token }) => {
   const [estadoExamenes, setEstadoExamenes] = useState({});
@@ -105,7 +106,7 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
   }, [examenes, API_URL, token, usuarioId]);
 
   if (!usuarioId) {
-    return <p className="text-warning">Cargando datos del usuario...</p>;
+    return <Spinner />;
   }
 
   return (

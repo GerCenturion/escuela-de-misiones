@@ -1,6 +1,7 @@
 // src/components/ExamenRevisar.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import Spinner from "./Spinner";
 
 const ExamenRevisar = () => {
   const { examenId } = useParams();
@@ -43,7 +44,7 @@ const ExamenRevisar = () => {
   }
 
   if (!examen) {
-    return <div className="text-center">Cargando revisión del examen...</div>;
+    return <Spinner />;
   }
 
   return (

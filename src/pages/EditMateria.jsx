@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import Spinner from "../components/Spinner";
 
 const EditMateria = () => {
   const { id } = useParams();
@@ -98,7 +99,7 @@ const EditMateria = () => {
   };
 
   if (!materia) {
-    return <div>Cargando...</div>;
+    return <Spinner />;
   }
 
   return (
