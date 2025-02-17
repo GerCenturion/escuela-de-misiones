@@ -196,7 +196,10 @@ const AdminDashboard = () => {
             <li>
               <button
                 className={activeSection === "usuarios" ? "active" : ""}
-                onClick={() => setActiveSection("usuarios")}
+                onClick={() => {
+                  setActiveSection("usuarios");
+                  setIsSidebarOpen(false);
+                }}
               >
                 Administrar Usuarios
               </button>
@@ -204,7 +207,10 @@ const AdminDashboard = () => {
             <li>
               <button
                 className={activeSection === "materias" ? "active" : ""}
-                onClick={() => setActiveSection("materias")}
+                onClick={() => {
+                  setActiveSection("materias");
+                  setIsSidebarOpen(false);
+                }}
               >
                 Administrar Materias
               </button>
@@ -222,7 +228,10 @@ const AdminDashboard = () => {
             <li>
               <button
                 className={activeSection === "verMaterias" ? "active" : ""}
-                onClick={() => setActiveSection("verMaterias")}
+                onClick={() => {
+                  setActiveSection("verMaterias");
+                  setIsSidebarOpen(false);
+                }}
               >
                 Materias Habilitadas
               </button>
@@ -249,6 +258,13 @@ const AdminDashboard = () => {
             <li>
               <LogoutButton />
             </li>
+            <div className="container">
+              <img
+                src="/logo.png"
+                alt="Escuela de Misiones"
+                style={{ height: "150px", marginRight: "5px" }}
+              />
+            </div>
           </ul>
         </nav>
       </aside>
