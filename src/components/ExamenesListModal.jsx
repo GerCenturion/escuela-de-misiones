@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Spinner from "./Spinner";
 
 const ExamenesListModal = ({ materiaId, onClose }) => {
   const [examenes, setExamenes] = useState([]);
@@ -83,7 +84,7 @@ const ExamenesListModal = ({ materiaId, onClose }) => {
     <div className="container mt-4">
       <h2>Lista de Exámenes</h2>
       {loading ? (
-        <p>Cargando exámenes...</p>
+        <Spinner />
       ) : examenes.length > 0 ? (
         <ul className="list-group">
           {examenes.map((examen) => (

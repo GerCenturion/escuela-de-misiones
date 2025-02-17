@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
+import Spinner from "../components/Spinner";
 import "../Dashboard.css";
 
 const Dashboard = () => {
@@ -10,6 +11,8 @@ const Dashboard = () => {
   const [availableMaterias, setAvailableMaterias] = useState([]);
   const [inscriptionStatus, setInscriptionStatus] = useState({});
   const sidebarRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMaterias, setLoadingMaterias] = useState(false);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -36,6 +39,7 @@ const Dashboard = () => {
 
         const data = await response.json();
         setUserData(data);
+        setLoading(false);
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
       }
@@ -146,7 +150,7 @@ const Dashboard = () => {
       setIsSidebarOpen(false);
     }
   };
-
+  if (loading) return <Spinner />;
   return (
     <div className="dashboard-container">
       <button
@@ -197,63 +201,69 @@ const Dashboard = () => {
         {activeSection === "materias" && (
           <section>
             <h1>Materias Disponibles</h1>
-            <div className="materias-container">
-              {availableMaterias.map((materia) => {
-                const estadoInscripcion =
-                  inscriptionStatus[materia._id] || "No Inscrito";
-                const userId = userData?._id; // 🔥 Extraemos el userId de userData
 
-                return (
-                  <div
-                    key={materia._id}
-                    className="materia-card"
-                  >
-                    <h3 className="materia-title">{materia.name}</h3>
-                    <p className="materia-level">{materia.level}</p>
-                    <p className="materia-profesor">
-                      Profesor:{" "}
-                      {materia.professor?.name || "Sin profesor asignado"}
-                    </p>
+            {/* ✅ Mostrar el Spinner mientras las materias se cargan */}
+            {loadingMaterias ? (
+              <Spinner />
+            ) : (
+              <div className="materias-container">
+                {availableMaterias.map((materia) => {
+                  const estadoInscripcion =
+                    inscriptionStatus[materia._id] || "No Inscrito";
+                  const userId = userData?._id; // 🔥 Extraemos el userId de userData
 
-                    {/* Estado de inscripción con colores */}
-                    <div className="inscription-status">
-                      {estadoInscripcion === "Pendiente" && (
-                        <span className="badge badge-warning">Pendiente</span>
-                      )}
-                      {estadoInscripcion === "Aceptado" && (
-                        <span className="badge badge-success">Aceptado</span>
-                      )}
-                      {estadoInscripcion === "Rechazado" && (
-                        <span className="badge badge-danger">Rechazado</span>
-                      )}
+                  return (
+                    <div
+                      key={materia._id}
+                      className="materia-card"
+                    >
+                      <h3 className="materia-title">{materia.name}</h3>
+                      <p className="materia-level">{materia.level}</p>
+                      <p className="materia-profesor">
+                        Profesor:{" "}
+                        {materia.professor?.name || "Sin profesor asignado"}
+                      </p>
+
+                      {/* Estado de inscripción con colores */}
+                      <div className="inscription-status">
+                        {estadoInscripcion === "Pendiente" && (
+                          <span className="badge badge-warning">Pendiente</span>
+                        )}
+                        {estadoInscripcion === "Aceptado" && (
+                          <span className="badge badge-success">Aceptado</span>
+                        )}
+                        {estadoInscripcion === "Rechazado" && (
+                          <span className="badge badge-danger">Rechazado</span>
+                        )}
+                      </div>
+
+                      {/* Botón de inscripción */}
+                      <div className="materia-action">
+                        {estadoInscripcion === "Aceptado" ? (
+                          <Link
+                            to={`/materia/${materia._id}`}
+                            state={{ userId }} // 🔥 Pasamos userId como estado
+                            className="btn-materia"
+                          >
+                            Acceder
+                          </Link>
+                        ) : (
+                          <button
+                            className="btn-materia"
+                            disabled={estadoInscripcion === "Pendiente"}
+                            onClick={() => handleInscripcion(materia._id)}
+                          >
+                            {estadoInscripcion === "Pendiente"
+                              ? "Solicitud Enviada"
+                              : "Solicitar Inscripción"}
+                          </button>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Botón de inscripción */}
-                    <div className="materia-action">
-                      {estadoInscripcion === "Aceptado" ? (
-                        <Link
-                          to={`/materia/${materia._id}`}
-                          state={{ userId }} // 🔥 Pasamos userId como estado
-                          className="btn-materia"
-                        >
-                          Acceder
-                        </Link>
-                      ) : (
-                        <button
-                          className="btn-materia"
-                          disabled={estadoInscripcion === "Pendiente"}
-                          onClick={() => handleInscripcion(materia._id)}
-                        >
-                          {estadoInscripcion === "Pendiente"
-                            ? "Solicitud Enviada"
-                            : "Solicitar Inscripción"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 

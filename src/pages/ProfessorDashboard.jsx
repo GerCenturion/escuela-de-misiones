@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
 import LibretasPage from "../components/LibretasPage";
+import Spinner from "../components/Spinner";
 
 const ProfessorDashboard = () => {
   const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [activeSection, setActiveSection] = useState("home");
@@ -43,6 +45,7 @@ const ProfessorDashboard = () => {
 
         const data = await response.json();
         setUserData(data);
+        setLoading(false);
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
       }
@@ -124,6 +127,8 @@ const ProfessorDashboard = () => {
       </li>
     );
   };
+
+  if (loading) return <Spinner />;
 
   return (
     <div className="dashboard-container">
