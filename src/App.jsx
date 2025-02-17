@@ -22,8 +22,12 @@ import MateriaDetalle from "./pages/MateriaDetalle";
 import ExamenCompletar from "./pages/ExamenCompletar";
 import CorregirExamen from "./pages/CorregirExamen";
 import ExamenRevisar from "./components/ExamenRevisar";
+import RehacerExamen from "./pages/RehacerExamen";
 import RecuperarContrasena from "./pages/RecuperarContrasena";
 import WhatsAppButton from "./components/WhatsAppButton";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const token = localStorage.getItem("token");
 
 const App = () => {
   return (
@@ -71,7 +75,6 @@ const App = () => {
               </>
             }
           />
-
           <Route
             path="/login"
             element={
@@ -92,7 +95,6 @@ const App = () => {
               </>
             }
           />
-
           {/* Rutas sin Header ni Footer */}
           <Route
             path="/dashboard"
@@ -118,7 +120,6 @@ const App = () => {
               </AdminRoute>
             }
           />
-
           {/* Otras rutas */}
           <Route
             path="/materia/:id"
@@ -136,6 +137,16 @@ const App = () => {
             path="/revisar-examen/:examenId"
             element={<ExamenRevisar />}
           />
+          <Route
+            path="/examen/:examenId/rehacer"
+            element={
+              <RehacerExamen
+                API_URL={API_URL}
+                token={token}
+              />
+            }
+          />
+
           <Route
             path="/admin/edit/:id"
             element={

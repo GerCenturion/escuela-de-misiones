@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import RehacerExamen from "../pages/RehacerExamen";
 
 const ListaExamenes = ({ examenes, API_URL, token }) => {
   const [estadoExamenes, setEstadoExamenes] = useState({});
@@ -57,32 +58,28 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
         const data = await response.json();
         console.log("🟢 Estado del examen obtenido:", data);
 
-        let estadoTexto = "⏳ Pendiente";
-        let estadoClase = "badge bg-secondary";
-        let estadoBoton = "Realizar Examen";
+        let botonTexto = "⏳ Pendiente - Realizar Examen";
+        let botonClase = "btn btn-secondary";
         let accionBoton = () => navigate(`/examen/${examenId}`);
         let botonDeshabilitado = false;
 
         if (data.completado) {
           if (data.corregido) {
             if (data.estadoGeneral === "aprobado") {
-              estadoTexto = "✔️ Aprobado";
-              estadoClase = "badge bg-success";
-              estadoBoton = "Ver Detalles";
+              botonTexto = "✔️ Aprobado - Ver Examen";
+              botonClase = "btn btn-success";
               accionBoton = () =>
                 navigate(`/revisar-examen/${examenId}`, {
                   state: { usuarioId, token },
                 });
-            } else {
-              estadoTexto = "❌ Rehacer";
-              estadoClase = "badge bg-danger";
-              estadoBoton = "Rehacer Examen";
-              accionBoton = () => navigate(`/examen/${examenId}`);
+            } else if (data.estadoGeneral === "rehacer") {
+              botonTexto = "❌ Rehacer - Examen Incorrecto";
+              botonClase = "btn btn-danger";
+              accionBoton = () => navigate(`/examen/${examenId}/rehacer`);
             }
           } else {
-            estadoTexto = "🕒 Realizado - Esperando Corrección";
-            estadoClase = "badge bg-warning text-dark";
-            estadoBoton = "Esperando Corrección";
+            botonTexto = "🕒 Pendiente de Corrección";
+            botonClase = "btn btn-warning text-dark";
             botonDeshabilitado = true;
           }
         }
@@ -90,12 +87,8 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
         setEstadoExamenes((prev) => ({
           ...prev,
           [examenId]: {
-            completado: data.completado,
-            corregido: data.corregido,
-            estado: data.estadoGeneral,
-            estadoTexto,
-            estadoClase,
-            estadoBoton,
+            botonTexto,
+            botonClase,
             accionBoton,
             botonDeshabilitado,
             fechaLimite: data.fechaLimite || "No especificada",
@@ -132,28 +125,26 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
                   <h5>{examen.titulo}</h5>
                   <p>
                     <strong>Fecha Límite:</strong>{" "}
-                    {estado.fechaLimite || "No especificada"}
+                    {estado.fechaLimite
+                      ? new Date(estado.fechaLimite).toLocaleDateString(
+                          "es-AR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "2-digit",
+                          }
+                        )
+                      : "No especificada"}
                   </p>
                 </div>
 
-                {/* Estado del examen con colores */}
-                <span className={`badge ${estado.estadoClase}`}>
-                  {estado.estadoTexto}
-                </span>
-
-                {/* Botón con estado dinámico */}
+                {/* Único botón dinámico */}
                 <button
-                  className="btn btn-sm"
+                  className={estado.botonClase}
                   onClick={estado.accionBoton}
                   disabled={estado.botonDeshabilitado}
-                  style={{
-                    backgroundColor: estado.botonDeshabilitado
-                      ? "#ccc"
-                      : "#007bff",
-                    color: "white",
-                  }}
                 >
-                  {estado.estadoBoton}
+                  {estado.botonTexto}
                 </button>
               </li>
             );

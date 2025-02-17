@@ -21,7 +21,32 @@ const ExamenesListModal = ({ materiaId, onClose }) => {
         }
 
         const data = await response.json();
-        setExamenes(data);
+
+        // Obtener cantidad de exámenes pendientes de corrección por cada examen
+        const examenesConPendientes = await Promise.all(
+          data.map(async (examen) => {
+            const res = await fetch(
+              `${API_URL}/examenes/${examen._id}/respuestas`,
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
+            if (!res.ok) return { ...examen, pendientesCorreccion: 0 };
+
+            const respuestas = await res.json();
+
+            // Contar respuestas con estado "pendiente" o "rehacer"
+            const pendientesCorreccion = respuestas.filter(
+              (r) => r.estado === "pendiente" || r.estado === "rehacer"
+            ).length;
+
+            return { ...examen, pendientesCorreccion };
+          })
+        );
+
+        setExamenes(examenesConPendientes);
       } catch (error) {
         console.error("Error al obtener exámenes:", error);
       } finally {
@@ -66,13 +91,24 @@ const ExamenesListModal = ({ materiaId, onClose }) => {
               key={examen._id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <span>{examen.titulo || `Examen #${examen._id}`}</span>
+              <div>
+                <h5>{examen.titulo || `Examen #${examen._id}`}</h5>
+                <p>
+                  <strong>Fecha Límite:</strong>{" "}
+                  {new Date(examen.fechaLimite).toLocaleDateString() ||
+                    "No especificada"}
+                </p>
+                <p>
+                  <strong>Pendientes de Corrección:</strong>{" "}
+                  {examen.pendientesCorreccion}
+                </p>
+              </div>
               <div className="d-flex gap-2 justify-content-end">
                 <button
                   className="btn btn-primary btn-sm me-2"
                   onClick={() => navigate(`/corregir/${examen._id}`)}
                 >
-                  Corregir
+                  Corregir ({examen.pendientesCorreccion})
                 </button>
 
                 <button
