@@ -304,6 +304,21 @@ const ExamenCompletar = () => {
                     <FaMicrophone /> Grabar
                   </button>
                 )}
+                {grabaciones[pregunta._id] && (
+                  <>
+                    <audio
+                      controls
+                      src={grabaciones[pregunta._id]}
+                      className="mx-2"
+                    />
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() => eliminarGrabacion(pregunta._id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <input

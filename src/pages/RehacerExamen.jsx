@@ -242,8 +242,34 @@ const RehacerExamen = () => {
                     <FaMicrophone /> Grabar
                   </button>
                 )}
+                {grabaciones[pregunta._id] && (
+                  <>
+                    <audio
+                      controls
+                      src={grabaciones[pregunta._id]}
+                      className="mx-2"
+                    />
+                    <button
+                      className="btn btn-dark btn-sm"
+                      onClick={() => eliminarGrabacion(pregunta._id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
               </div>
-            ) : null}
+            ) : (
+              <input
+                type="text"
+                className="form-control"
+                onChange={(e) =>
+                  setRespuestas((prev) => ({
+                    ...prev,
+                    [pregunta._id]: { respuestaTexto: e.target.value },
+                  }))
+                }
+              />
+            )}
           </div>
         ))}
 
