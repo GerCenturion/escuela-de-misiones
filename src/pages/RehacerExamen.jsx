@@ -1,14 +1,23 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaMicrophone, FaStop, FaTrash } from "react-icons/fa";
+import Spinner from "../components/Spinner";
 
-const RehacerExamen = ({ API_URL, token }) => {
+const RehacerExamen = () => {
   const { examenId } = useParams();
   const [examen, setExamen] = useState(null);
-  const mediaRecorderRef = useRef(null);
+  const [yaRespondido, setYaRespondido] = useState(false);
   const [respuestas, setRespuestas] = useState({});
   const [grabaciones, setGrabaciones] = useState({});
   const [grabandoPregunta, setGrabandoPregunta] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tiempoGrabacion, setTiempoGrabacion] = useState(0);
+  const [puntos, setPuntos] = useState("");
+  const cronometroRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioStreamRef = useRef(null);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,13 +62,13 @@ const RehacerExamen = ({ API_URL, token }) => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       let chunks = [];
 
       recorder.ondataavailable = (event) => chunks.push(event.data);
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: "audio/wav" });
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
         const audioUrl = URL.createObjectURL(audioBlob);
 
         setGrabaciones((prev) => ({
@@ -77,8 +86,13 @@ const RehacerExamen = ({ API_URL, token }) => {
       };
 
       recorder.start();
-      mediaRecorderRef.current = recorder; // 🔹 Guardar la referencia del MediaRecorder
+      mediaRecorderRef.current = recorder;
       setGrabandoPregunta(preguntaId);
+      setTiempoGrabacion(0);
+      cronometroRef.current = setInterval(() => {
+        setTiempoGrabacion((prev) => prev + 1);
+        setPuntos((prev) => (prev.length < 3 ? prev + "." : ""));
+      }, 1000);
     } catch (error) {
       console.error("❌ Error al acceder al micrófono:", error);
     }
@@ -86,8 +100,9 @@ const RehacerExamen = ({ API_URL, token }) => {
 
   const detenerGrabacion = () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop(); // ✅ Ahora sí detiene correctamente
+      mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
+      clearInterval(cronometroRef.current);
     }
   };
 
@@ -105,14 +120,24 @@ const RehacerExamen = ({ API_URL, token }) => {
     });
   };
 
+  const formatearTiempo = (segundos) => {
+    const minutos = Math.floor(segundos / 60);
+    const segundosRestantes = segundos % 60;
+    return `${minutos.toString().padStart(2, "0")}:${segundosRestantes
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const enviarRespuestas = async () => {
     if (!examen) {
       alert("No se puede enviar el examen.");
       return;
     }
 
+    setIsSubmitting(true);
     const formData = new FormData();
     const respuestasAEnviar = [];
+    let archivosAudio = [];
 
     examen.preguntas.forEach((pregunta) => {
       const respuesta = respuestas[pregunta._id];
@@ -125,8 +150,13 @@ const RehacerExamen = ({ API_URL, token }) => {
         };
 
         if (pregunta.tipo === "audio" && respuesta.respuestaAudio) {
-          formData.append("archivoAudio", respuesta.respuestaAudio);
-          respuestaFormateada.respuestaAudio = "archivoAudio";
+          formData.append(
+            "archivoAudio",
+            respuesta.respuestaAudio,
+            `audio_${pregunta._id}.webm`
+          );
+
+          respuestaFormateada.respuestaAudio = `audio_${pregunta._id}.webm`;
         }
 
         respuestasAEnviar.push(respuestaFormateada);
@@ -154,15 +184,22 @@ const RehacerExamen = ({ API_URL, token }) => {
     } catch (error) {
       console.error("❌ Error al enviar respuestas:", error);
       alert("Hubo un problema al enviar las respuestas.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (!examen) {
-    return <p>Cargando examen para rehacer...</p>;
+    return <Spinner />;
   }
 
   return (
     <div className="container mt-4">
+      {isSubmitting && (
+        <div className="spinner-overlay">
+          <Spinner />
+        </div>
+      )}
       <h2>Rehacer Examen: {examen.titulo}</h2>
       <p>Materia: {examen.materia?.name || "No especificada"}</p>
 
@@ -174,33 +211,29 @@ const RehacerExamen = ({ API_URL, token }) => {
           >
             <label className="form-label">{pregunta.texto}</label>
 
-            {pregunta.tipo === "multiple-choice" ? (
+            {pregunta.tipo === "audio" ? (
               <div>
-                {pregunta.opciones.map((opcion) => (
-                  <div
-                    key={opcion._id}
-                    className="form-check"
-                  >
-                    <input
-                      type="radio"
-                      name={`pregunta-${pregunta._id}`}
-                      value={opcion._id}
-                      className="form-check-input"
-                      onChange={(e) =>
-                        manejarCambio(
-                          pregunta._id,
-                          e.target.value,
-                          "multiple-choice"
-                        )
-                      }
+                {grabandoPregunta === pregunta._id ? (
+                  <div className="d-flex align-items-center">
+                    <button
+                      type="button"
+                      className="btn btn-secondary ms-2"
+                      onClick={detenerGrabacion}
+                    >
+                      <FaStop /> Detener
+                    </button>
+                    <span className="ms-2">
+                      {formatearTiempo(tiempoGrabacion)}
+                    </span>
+                    <FaMicrophone
+                      className="text-danger me-2"
+                      size={20}
                     />
-                    <label className="form-check-label">{opcion.texto}</label>
+                    <span className="fw-bold text-danger">
+                      Grabando{puntos}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : pregunta.tipo === "audio" ? (
-              <div>
-                {grabandoPregunta !== pregunta._id ? (
+                ) : (
                   <button
                     type="button"
                     className="btn btn-danger"
@@ -208,50 +241,22 @@ const RehacerExamen = ({ API_URL, token }) => {
                   >
                     <FaMicrophone /> Grabar
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={detenerGrabacion}
-                  >
-                    <FaStop /> Detener
-                  </button>
-                )}
-
-                {grabaciones[pregunta._id] && (
-                  <>
-                    <audio
-                      controls
-                      src={grabaciones[pregunta._id]}
-                      className="mx-2"
-                    />
-                    <button
-                      className="btn btn-dark btn-sm"
-                      onClick={() => eliminarGrabacion(pregunta._id)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </>
                 )}
               </div>
-            ) : (
-              <input
-                type="text"
-                className="form-control"
-                onChange={(e) =>
-                  manejarCambio(pregunta._id, e.target.value, "desarrollo")
-                }
-              />
-            )}
+            ) : null}
           </div>
         ))}
 
         <button
           type="button"
           className="btn btn-primary"
-          onClick={enviarRespuestas}
+          disabled={isSubmitting}
+          onClick={() => {
+            if (grabandoPregunta) detenerGrabacion();
+            enviarRespuestas();
+          }}
         >
-          Enviar Correcciones
+          {isSubmitting ? <Spinner /> : "Enviar Correcciones"}
         </button>
       </form>
     </div>

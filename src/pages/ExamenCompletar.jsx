@@ -9,9 +9,13 @@ const ExamenCompletar = () => {
   const [yaRespondido, setYaRespondido] = useState(false);
   const [respuestas, setRespuestas] = useState({});
   const [grabaciones, setGrabaciones] = useState({});
-  const [grabandoPregunta, setGrabandoPregunta] = useState(null); // ✅ Control de grabación
-  const mediaRecorderRef = useRef(null); // ✅ Se usa un ref para MediaRecorder
-  const audioStreamRef = useRef(null); // ✅ Se usa un ref para el stream de audio
+  const [grabandoPregunta, setGrabandoPregunta] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tiempoGrabacion, setTiempoGrabacion] = useState(0);
+  const [puntos, setPuntos] = useState("");
+  const cronometroRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioStreamRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -43,40 +47,51 @@ const ExamenCompletar = () => {
     fetchExamen();
   }, [examenId, token]);
 
+  const manejarCambio = (preguntaId, valor, tipo) => {
+    setRespuestas((prev) => ({
+      ...prev,
+      [preguntaId]:
+        tipo === "multiple-choice"
+          ? { opcionSeleccionada: valor }
+          : { respuestaTexto: valor },
+    }));
+  };
+
   const iniciarGrabacion = async (preguntaId) => {
     if (grabandoPregunta) return; // ✅ Evita múltiples grabaciones simultáneas
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream; // ✅ Guardar referencia al stream
-      const recorder = new MediaRecorder(stream);
+
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       let chunks = [];
 
       recorder.ondataavailable = (event) => chunks.push(event.data);
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: "audio/wav" });
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
         const audioUrl = URL.createObjectURL(audioBlob);
 
-        setGrabaciones((prev) => ({
-          ...prev,
-          [preguntaId]: audioUrl,
-        }));
-
+        setGrabaciones((prev) => ({ ...prev, [preguntaId]: audioUrl }));
         setRespuestas((prev) => ({
           ...prev,
           [preguntaId]: { respuestaAudio: audioBlob },
         }));
 
-        setGrabandoPregunta(null); // ✅ Habilitar otros micrófonos
-
-        // ✅ Detener el stream del micrófono para liberar recursos
+        setGrabandoPregunta(null);
+        setTiempoGrabacion(0);
         stream.getTracks().forEach((track) => track.stop());
       };
 
       recorder.start();
-      mediaRecorderRef.current = recorder; // ✅ Guardar el MediaRecorder
-      setGrabandoPregunta(preguntaId); // ✅ Marcar la pregunta en grabación
+      mediaRecorderRef.current = recorder;
+      setGrabandoPregunta(preguntaId);
+      setTiempoGrabacion(0);
+      cronometroRef.current = setInterval(() => {
+        setTiempoGrabacion((prev) => prev + 1);
+        setPuntos((prev) => (prev.length < 3 ? prev + "." : ""));
+      }, 1000);
     } catch (error) {
       console.error("❌ Error al acceder al micrófono:", error);
     }
@@ -84,8 +99,9 @@ const ExamenCompletar = () => {
 
   const detenerGrabacion = () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop(); // ✅ Detiene correctamente la grabación
+      mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
+      clearInterval(cronometroRef.current);
     }
   };
 
@@ -101,6 +117,14 @@ const ExamenCompletar = () => {
       delete nuevoEstado[preguntaId];
       return nuevoEstado;
     });
+  };
+
+  const formatearTiempo = (segundos) => {
+    const minutos = Math.floor(segundos / 60);
+    const segundosRestantes = segundos % 60;
+    return `${minutos.toString().padStart(2, "0")}:${segundosRestantes
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const enviarRespuestas = async () => {
@@ -143,6 +167,8 @@ const ExamenCompletar = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     const formData = new FormData();
     const formattedRespuestas = [];
     let archivosAudio = [];
@@ -160,7 +186,7 @@ const ExamenCompletar = () => {
       if (pregunta.tipo === "audio" && respuesta?.respuestaAudio) {
         archivosAudio.push({
           archivo: respuesta.respuestaAudio,
-          nombre: `audio_${pregunta._id}.wav`, // 📌 Nombre correcto
+          nombre: `audio_${pregunta._id}.webm`,
         });
       }
 
@@ -195,16 +221,22 @@ const ExamenCompletar = () => {
     } catch (error) {
       console.error("❌ Error al enviar respuestas:", error);
       alert("Hubo un problema al enviar las respuestas.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (!examen) {
     return <Spinner />;
-    // return <p>Cargando examen...</p>;
   }
 
   return (
     <div className="container mt-4">
+      {isSubmitting && (
+        <div className="spinner-overlay">
+          <Spinner />
+        </div>
+      )}
       <h2>{examen.titulo}</h2>
       <p>Materia: {examen.materia?.name || "No especificada"}</p>
 
@@ -243,45 +275,34 @@ const ExamenCompletar = () => {
               </div>
             ) : pregunta.tipo === "audio" ? (
               <div>
-                {/* ✅ Oculta otros micrófonos si ya hay una grabación en curso */}
-                {grabandoPregunta &&
-                grabandoPregunta !== pregunta._id ? null : (
-                  <>
-                    {grabandoPregunta === pregunta._id ? (
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={detenerGrabacion}
-                      >
-                        <FaStop /> Detener
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        onClick={() => iniciarGrabacion(pregunta._id)}
-                      >
-                        <FaMicrophone /> Grabar
-                      </button>
-                    )}
-                  </>
-                )}
-
-                {/* ✅ Mostrar audio grabado y botón de eliminar si hay grabación */}
-                {grabaciones[pregunta._id] && (
-                  <>
-                    <audio
-                      controls
-                      src={grabaciones[pregunta._id]}
-                      className="mx-2"
-                    />
+                {grabandoPregunta === pregunta._id ? (
+                  <div className="d-flex align-items-center">
                     <button
-                      className="btn btn-dark btn-sm"
-                      onClick={() => eliminarGrabacion(pregunta._id)}
+                      type="button"
+                      className="btn btn-secondary ms-2"
+                      onClick={detenerGrabacion}
                     >
-                      <FaTrash />
+                      <FaStop /> Detener
                     </button>
-                  </>
+                    <span className="ms-2">
+                      {formatearTiempo(tiempoGrabacion)}
+                    </span>
+                    <FaMicrophone
+                      className="text-danger me-2"
+                      size={20}
+                    />
+                    <span className="fw-bold text-danger">
+                      Grabando{puntos}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => iniciarGrabacion(pregunta._id)}
+                  >
+                    <FaMicrophone /> Grabar
+                  </button>
                 )}
               </div>
             ) : (
@@ -302,9 +323,13 @@ const ExamenCompletar = () => {
         <button
           type="button"
           className="btn btn-primary"
-          onClick={enviarRespuestas}
+          disabled={isSubmitting}
+          onClick={() => {
+            if (grabandoPregunta) detenerGrabacion();
+            enviarRespuestas();
+          }}
         >
-          Enviar Respuestas
+          {isSubmitting ? <Spinner /> : "Enviar Respuestas"}
         </button>
       </form>
     </div>
