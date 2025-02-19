@@ -40,7 +40,7 @@ const ExamenesListModal = ({ materiaId, onClose }) => {
 
             // Contar respuestas con estado "pendiente" o "rehacer"
             const pendientesCorreccion = respuestas.filter(
-              (r) => r.estado === "pendiente" || r.estado === "rehacer"
+              (r) => r.estado === "realizado"
             ).length;
 
             return { ...examen, pendientesCorreccion };

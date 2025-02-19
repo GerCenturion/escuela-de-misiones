@@ -44,7 +44,9 @@ const ExamenItem = ({ respuesta, examen, index, enviarCorrecciones }) => {
             ? "✔️ Aprobado"
             : respuesta.estado === "rehacer"
             ? "❌ Rehacer"
-            : "⏳ Pendiente de corrección"}
+            : respuesta.estado === "realizado"
+            ? "⏳ Pendiente de corrección"
+            : "Falta realizar Examen"}
         </p>
 
         {/* 🔹 Secciones de Respuestas (Expandibles) */}
@@ -128,7 +130,9 @@ const ExamenItem = ({ respuesta, examen, index, enviarCorrecciones }) => {
                       : correcciones.find((c) => c.preguntaId === r.preguntaId)
                           ?.estado === "rehacer"
                       ? "❌ Rehacer"
-                      : "⏳ Pendiente de corrección"}
+                      : respuesta.estado === "realizado"
+                      ? "⏳ Pendiente de corrección"
+                      : "Falta realizar Examen"}
                   </p>
 
                   {/* 🔹 Botones de Corrección */}

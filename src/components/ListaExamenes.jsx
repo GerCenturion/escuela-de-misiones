@@ -59,11 +59,10 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
         const data = await response.json();
         console.log("🟢 Estado del examen obtenido:", data);
 
-        let botonTexto = "⏳ Pendiente - Realizar Examen";
+        let botonTexto = "✏️ Pendiente - Realizar Examen";
         let botonClase = "btn btn-secondary";
         let accionBoton = () => navigate(`/examen/${examenId}`);
         let botonDeshabilitado = false;
-
         if (data.completado) {
           if (data.corregido) {
             if (data.estadoGeneral === "aprobado") {
@@ -77,11 +76,16 @@ const ListaExamenes = ({ examenes, API_URL, token }) => {
               botonTexto = "❌ Rehacer - Examen Incorrecto";
               botonClase = "btn btn-danger";
               accionBoton = () => navigate(`/examen/${examenId}/rehacer`);
+            } else if (data.estadoGeneral === "realizado") {
+              // 🔹 Nuevo estado: Pendiente de corrección
+              botonTexto = "🕒 Pendiente de Corrección";
+              botonClase = "btn btn-warning text-dark";
+              botonDeshabilitado = true;
+            } else {
+              botonTexto = "✏️ Realizar Examen";
+              botonClase = "btn btn-warning text-dark";
+              botonDeshabilitado = true;
             }
-          } else {
-            botonTexto = "🕒 Pendiente de Corrección";
-            botonClase = "btn btn-warning text-dark";
-            botonDeshabilitado = true;
           }
         }
 
