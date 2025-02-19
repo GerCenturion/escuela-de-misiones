@@ -173,51 +173,6 @@ const Perfil = ({ API_URL, token }) => {
   return (
     <div className="perfil-container">
       <h1>Perfil de Usuario</h1>
-      {userData && (
-        <div className="profile-wrapper">
-          <div className="profile-image-container">
-            <img
-              src={previewImage}
-              alt="Foto de perfil"
-              className="profile-picture"
-            />
-            <div
-              className="edit-icon"
-              onClick={() => fileInputRef.current.click()}
-            >
-              <FaPen />
-            </div>
-          </div>
-
-          <input
-            type="file"
-            accept="image/jpeg, image/png"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={handleFileChange}
-          />
-
-          {error && <p className="text-danger">{error}</p>}
-
-          {/* Botones solo si hay una imagen seleccionada */}
-          {selectedFile && (
-            <div className="upload-buttons">
-              <button
-                className="upload-confirm"
-                onClick={handleUpload}
-              >
-                <FaCheck />
-              </button>
-              <button
-                className="upload-cancel"
-                onClick={handleCancelUpload} // Nueva función para cancelar y restaurar la imagen previa
-              >
-                <FaTimes />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Información personal */}
       <div className="info-card">

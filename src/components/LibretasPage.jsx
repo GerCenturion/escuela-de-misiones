@@ -143,7 +143,7 @@ const LibretasPage = () => {
             <th>Materia</th>
             <th>Nivel</th>
             <th>Profesor</th>
-            <th>Nota Final</th>
+            <th>Estado</th>
             <th>Fecha de Cierre</th>
           </tr>
         </thead>
@@ -157,7 +157,7 @@ const LibretasPage = () => {
                 <td>{libreta.materia.name}</td>
                 <td>{libreta.materia.level}</td>
                 <td>{libreta.profesor.name}</td>
-                <td>{libreta.notaFinal}</td>
+                <td>{libreta.estadoFinal}</td>
                 <td>{formatFecha(libreta.fechaCierre)}</td>
               </tr>
             ))
