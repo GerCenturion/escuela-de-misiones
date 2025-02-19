@@ -273,6 +273,16 @@ const AdminDashboard = () => {
         {activeSection === "usuarios" && (
           <section>
             <h1>Administración de Usuarios</h1>
+
+            {/* ✅ Botón para crear usuario */}
+            <div className="d-flex justify-content-between mb-3">
+              <button
+                className="btn btn-success"
+                onClick={() => navigate("/admin/crear-usuario")}
+              >
+                ➕ Crear Usuario
+              </button>
+            </div>
             {error && <div className="alert alert-danger">{error}</div>}
             {/* Filtros y Ordenación */}
             <div className="d-flex mb-3 gap-3">
@@ -341,6 +351,7 @@ const AdminDashboard = () => {
                       return b.email.localeCompare(a.email);
                     return 0;
                   })
+
                   .map((usuario) => (
                     <tr key={usuario._id}>
                       <td>{usuario.name}</td>
@@ -375,7 +386,7 @@ const AdminDashboard = () => {
               className="btn btn-success mb-3"
               onClick={() => navigate("/admin/materias/create")}
             >
-              Agregar Materia
+              ➕ Agregar Materia
             </button>
 
             {error && <div className="alert alert-danger">{error}</div>}
