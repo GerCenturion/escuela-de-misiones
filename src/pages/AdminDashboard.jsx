@@ -255,6 +255,8 @@ const AdminDashboard = () => {
                 Perfil
               </button>
             </li>
+            <Link to="/admin/agregar-libreta">Agregar Libreta</Link>
+
             <li>
               <LogoutButton />
             </li>

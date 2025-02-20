@@ -26,6 +26,7 @@ import RehacerExamen from "./pages/RehacerExamen";
 import RecuperarContrasena from "./pages/RecuperarContrasena";
 import WhatsAppButton from "./components/WhatsAppButton";
 import CrearUsuario from "./pages/CrearUsuario";
+import AgregarLibreta from "./pages/AgregarLibreta";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const token = localStorage.getItem("token");
@@ -129,6 +130,15 @@ const App = () => {
               </AdminRoute>
             }
           />
+          <Route
+            path="/admin/agregar-libreta"
+            element={
+              <AdminRoute>
+                <AgregarLibreta />
+              </AdminRoute>
+            }
+          />
+
           {/* Otras rutas */}
           <Route
             path="/materia/:id"

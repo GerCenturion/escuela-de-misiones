@@ -80,6 +80,7 @@ const RecuperarContrasena = () => {
               value={dni}
               onChange={(e) => setDni(e.target.value)}
               required
+              pattern="\d*"
             />
             <button
               onClick={handleRequestCode}
@@ -97,6 +98,7 @@ const RecuperarContrasena = () => {
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               required
+              pattern="\d*"
             />
             <label className="form-label">Nueva Contraseña:</label>
             <input

@@ -92,6 +92,7 @@ const Login = () => {
                 value={dni}
                 onChange={(e) => setDni(e.target.value)}
                 required
+                pattern="\d*"
               />
             </div>
             <div className="mb-3 position-relative">
@@ -146,6 +147,7 @@ const Login = () => {
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
                 required
+                pattern="\d*"
               />
             </div>
             <button
