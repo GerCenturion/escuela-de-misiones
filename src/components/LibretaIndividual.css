@@ -1,0 +1,45 @@
+.libreta-container {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.libreta-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.libreta-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.libreta-tabla th,
+.libreta-tabla td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.libreta-tabla th {
+  background-color: #f4f4f9;
+  color: #333;
+  font-weight: bold;
+}
+
+.libreta-tabla tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.libreta-tabla tr:hover {
+  background-color: #f1f1f1;
+}

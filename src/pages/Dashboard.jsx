@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import LibretaIndividual from "../components/LibretaIndividual";
 import Perfil from "../components/Perfil";
 import LogoutButton from "../components/LogoutButton";
 import Spinner from "../components/Spinner";
@@ -16,6 +17,7 @@ const Dashboard = () => {
   const [loadingInscripcion, setLoadingInscripcion] = useState(false);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+  const [alumnoId, setAlumnoId] = useState(null); // ✅ Definido como estado
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ const Dashboard = () => {
         const data = await response.json();
         setUserData(data);
         setLoading(false);
+        setAlumnoId(data._id);
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
       }
@@ -186,6 +189,14 @@ const Dashboard = () => {
             </li>
             <li>
               <button
+                className={activeSection === "libreta" ? "active" : ""}
+                onClick={() => handleSectionChange("libreta")}
+              >
+                Libreta
+              </button>
+            </li>
+            <li>
+              <button
                 className={activeSection === "profile" ? "active" : ""}
                 onClick={() => handleSectionChange("profile")}
               >
@@ -200,6 +211,14 @@ const Dashboard = () => {
       <main className="main-content">
         {activeSection === "home" && (
           <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
+        )}
+
+        {activeSection === "libreta" && (
+          <LibretaIndividual
+            alumnoId={userData?._id}
+            nombre={userData?.name}
+            legajo={userData?.legajo}
+          />
         )}
 
         {activeSection === "materias" && (
@@ -243,19 +262,7 @@ const Dashboard = () => {
 
                       {/* Botón de inscripción */}
                       <div className="materia-action">
-                        {loadingInscripcion ? (
-                          <button
-                            className="btn-materia"
-                            disabled
-                          >
-                            <span
-                              className="spinner-border spinner-border-sm"
-                              role="status"
-                              aria-hidden="true"
-                            ></span>
-                            Procesando...
-                          </button>
-                        ) : estadoInscripcion === "Aceptado" ? (
+                        {estadoInscripcion === "Aceptado" ? (
                           <Link
                             to={`/materia/${materia._id}`}
                             state={{ userId }} // 🔥 Pasamos userId como estado
