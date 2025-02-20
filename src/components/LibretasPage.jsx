@@ -151,9 +151,7 @@ const LibretasPage = () => {
           {filteredLibretas.length > 0 ? (
             filteredLibretas.map((libreta) => (
               <tr key={libreta._id}>
-                <td>
-                  {libreta.alumno.name} ({libreta.alumno.email})
-                </td>
+                <td>{libreta.alumno.name}</td>
                 <td>{libreta.materia.name}</td>
                 <td>{libreta.materia.level}</td>
                 <td>{libreta.profesor.name}</td>

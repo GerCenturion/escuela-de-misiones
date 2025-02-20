@@ -13,6 +13,7 @@ const Dashboard = () => {
   const sidebarRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [loadingMaterias, setLoadingMaterias] = useState(false);
+  const [loadingInscripcion, setLoadingInscripcion] = useState(false);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -70,6 +71,7 @@ const Dashboard = () => {
 
     const fetchInscriptionStatus = async (materiaId) => {
       if (!materiaId) return;
+      setLoadingInscripcion(true);
 
       try {
         const response = await fetch(
@@ -91,6 +93,8 @@ const Dashboard = () => {
         }));
       } catch (error) {
         console.error("Error al obtener estado de inscripción:", error);
+      } finally {
+        setLoadingInscripcion(false); // ✅ Ocultar Spinner al finalizar
       }
     };
 
@@ -239,7 +243,19 @@ const Dashboard = () => {
 
                       {/* Botón de inscripción */}
                       <div className="materia-action">
-                        {estadoInscripcion === "Aceptado" ? (
+                        {loadingInscripcion ? (
+                          <button
+                            className="btn-materia"
+                            disabled
+                          >
+                            <span
+                              className="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
+                            Procesando...
+                          </button>
+                        ) : estadoInscripcion === "Aceptado" ? (
                           <Link
                             to={`/materia/${materia._id}`}
                             state={{ userId }} // 🔥 Pasamos userId como estado

@@ -12,6 +12,7 @@ const ProfessorMateriaPage = () => {
   const [materia, setMateria] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [mostrarExamenForm, setMostrarExamenForm] = useState(false);
   const [mostrarExamenesModal, setMostrarExamenesModal] = useState(false);
   const [mostrarFileUploader, setMostrarFileUploader] = useState(false);
@@ -214,7 +215,7 @@ const ProfessorMateriaPage = () => {
     }
 
     console.log("Cerrando materia con ID:", id); // Depuración
-
+    setIsProcessing(true);
     try {
       const response = await fetch(`${API_URL}/materias/cerrar/${id}`, {
         method: "PUT",
@@ -237,6 +238,8 @@ const ProfessorMateriaPage = () => {
     } catch (error) {
       console.error("Error al cerrar materia:", error.message);
       alert(error.message || "No se pudo cerrar la materia.");
+    } finally {
+      setIsProcessing(false); // ✅ Ocultar Spinner
     }
   };
 
@@ -275,12 +278,26 @@ const ProfessorMateriaPage = () => {
         Administrar Videos
       </button>
 
-      <button
-        className="btn btn-danger mb-3"
-        onClick={cerrarMateria}
-      >
-        Cerrar Materia
-      </button>
+      <div>
+        {/* Mostrar Spinner mientras se procesa */}
+        {isProcessing && (
+          <div className="spinner-overlay">
+            <Spinner />
+            <h5 className="text-center mt-3">
+              Procesando cierre de materia...
+            </h5>
+          </div>
+        )}
+
+        {/* Botón de cierre de materia */}
+        <button
+          className="btn btn-danger mb-3"
+          onClick={cerrarMateria}
+          disabled={isProcessing} // ✅ Deshabilitar mientras se procesa
+        >
+          Cerrar Materia
+        </button>
+      </div>
 
       {/* <h2>Alumnos</h2>
       {error && <div className="alert alert-danger">{error}</div>}
