@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import LibretaIndividual from "./LibretaIndividual";
 
 const LibretasPage = () => {
   const [libretas, setLibretas] = useState([]);
   const [error, setError] = useState("");
+  const [selectedAlumno, setSelectedAlumno] = useState(null); // 🔥 Almacenar alumno seleccionado
   const [selectedLibreta, setSelectedLibreta] = useState(null); // 🔥 Para el modal de edición
+  const [searchQuery, setSearchQuery] = useState(""); // 🔥 Búsqueda por nombre o legajo
   const [recibo, setRecibo] = useState("");
   const [fechaDePago, setFechaDePago] = useState("");
 
@@ -88,63 +91,115 @@ const LibretasPage = () => {
     }
   };
 
+  // ✅ Función para filtrar las libretas según el texto de búsqueda
+  const filteredLibretas = libretas.filter(
+    (libreta) =>
+      libreta.alumno.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      libreta.alumno.legajo.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // ✅ Función para manejar el clic en un alumno
+  const handleAlumnoClick = (alumno) => {
+    setSelectedAlumno(alumno);
+  };
+
+  // ✅ Función para volver atrás y mostrar la lista de libretas
+  const handleVolverAtras = () => {
+    setSelectedAlumno(null);
+  };
+
   return (
     <div className="container mt-5">
       <h1>Libretas de Todos los Alumnos</h1>
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>Legajo</th>
-            <th>Alumno</th>
-            <th>Materia</th>
-            <th>Nivel</th>
-            <th>Estado</th>
-            <th>Fecha de Cierre</th>
-            <th>Recibo</th>
-            <th>Fecha de Recibo</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {libretas.length > 0 ? (
-            libretas.map((libreta) => (
-              <tr key={libreta._id}>
-                <td>{libreta.alumno.legajo || ""}</td>
-                <td>{libreta.alumno.name}</td>
-                <td>{libreta.materia.name}</td>
-                <td>{libreta.materia.level}</td>
-                <td>{libreta.estadoFinal}</td>
-                <td>{formatFecha(libreta.fechaCierre)}</td>
-                <td>{libreta.recibo || "No registrado"}</td>
-                <td>
-                  {libreta.fechaDePago
-                    ? formatFecha(libreta.fechaDePago)
-                    : "No registrado"}
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-primary"
-                    onClick={() => abrirModal(libreta)}
-                  >
-                    Editar Recibo
-                  </button>
-                </td>
+      {/* 🔥 Mostrar LibretaIndividual al seleccionar un alumno */}
+      {selectedAlumno && selectedAlumno._id ? (
+        <div className="mt-4">
+          <button
+            className="btn btn-secondary mb-3"
+            onClick={handleVolverAtras} // ✅ Función para volver atrás
+          >
+            Volver Atrás
+          </button>
+          <LibretaIndividual
+            alumnoId={selectedAlumno._id}
+            nombre={selectedAlumno.name}
+            legajo={selectedAlumno.legajo}
+          />
+        </div>
+      ) : (
+        <>
+          {/* 🔍 Buscador único para nombre o legajo */}
+          <input
+            type="text"
+            className="form-control mb-3"
+            placeholder="Buscar por nombre o legajo..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          <table className="table table-striped">
+            <thead>
+              <tr>
+                <th>Legajo</th>
+                <th>Alumno</th>
+                <th>Materia</th>
+                <th>Nivel</th>
+                <th>Estado</th>
+                <th>Fecha de Cierre</th>
+                <th>Recibo</th>
+                <th>Fecha de Recibo</th>
+                <th>Acción</th>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan="10"
-                className="text-center"
-              >
-                No hay libretas registradas.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {filteredLibretas.length > 0 ? (
+                filteredLibretas.map((libreta) => (
+                  <tr
+                    key={libreta._id}
+                    onClick={() => handleAlumnoClick(libreta.alumno)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{libreta.alumno.legajo || ""}</td>
+                    <td>{libreta.alumno.name}</td>
+                    <td>{libreta.materia.name}</td>
+                    <td>{libreta.materia.level}</td>
+                    <td>{libreta.estadoFinal}</td>
+                    <td>{formatFecha(libreta.fechaCierre)}</td>
+                    <td>{libreta.recibo || "No registrado"}</td>
+                    <td>
+                      {libreta.fechaDePago
+                        ? formatFecha(libreta.fechaDePago)
+                        : "No registrado"}
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // 🔥 Evita conflicto con onClick de la fila
+                          abrirModal(libreta);
+                        }}
+                      >
+                        Editar Recibo
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="10"
+                    className="text-center"
+                  >
+                    No hay libretas registradas.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
 
       {/* 🔥 MODAL PARA EDITAR RECIBO Y FECHA DE PAGO */}
       {selectedLibreta && (
@@ -173,7 +228,7 @@ const LibretasPage = () => {
                       const valorNumerico = e.target.value.replace(
                         /[^0-9]/g,
                         ""
-                      ); // Permite solo números
+                      );
                       setRecibo(valorNumerico);
                     }}
                     pattern="\d*"
@@ -210,5 +265,4 @@ const LibretasPage = () => {
     </div>
   );
 };
-
 export default LibretasPage;
