@@ -1,80 +1,200 @@
 import React from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "../HomePage.css";
 
-const About = () => {
+const HomePage = () => {
   return (
-    <section className="about-container">
-      <h2 className="about-title">📚 Modalidad de Estudio</h2>
-      <p>
-        Nuestro <strong>Seminario Bíblico</strong> cuenta con un{" "}
-        <strong>Campus Virtual</strong> que permite a los estudiantes acceder a
-        todas las herramientas necesarias para su formación. A través de esta
-        plataforma, los alumnos pueden:
-      </p>
+    <div className="container mt-5">
+      {/* Carrusel de Imágenes */}
+      <div
+        id="homeCarousel"
+        className="carousel slide"
+        data-bs-ride="carousel"
+      >
+        <div className="carousel-inner">
+          <div className="carousel-item active">
+            <img
+              src="/fotos/1.jpeg"
+              className="d-block w-100"
+              alt="Slide 1"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/2.jpeg"
+              className="d-block w-100"
+              alt="Slide 2"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/3.jpeg"
+              className="d-block w-100"
+              alt="Slide 3"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/4.jpeg"
+              className="d-block w-100"
+              alt="Slide 4"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/5.jpeg"
+              className="d-block w-100"
+              alt="Slide 5"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/6.jpeg"
+              className="d-block w-100"
+              alt="Slide 6"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/7.jpeg"
+              className="d-block w-100"
+              alt="Slide 7"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/8.jpeg"
+              className="d-block w-100"
+              alt="Slide 8"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/9.jpeg"
+              className="d-block w-100"
+              alt="Slide 9"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/10.jpeg"
+              className="d-block w-100"
+              alt="Slide 10"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/11.jpeg"
+              className="d-block w-100"
+              alt="Slide 11"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/12.jpeg"
+              className="d-block w-100"
+              alt="Slide 12"
+            />
+          </div>
+          <div className="carousel-item">
+            <img
+              src="/fotos/13.jpeg"
+              className="d-block w-100"
+              alt="Slide 13"
+            />
+          </div>
+        </div>
+        <button
+          className="carousel-control-prev"
+          type="button"
+          data-bs-target="#homeCarousel"
+          data-bs-slide="prev"
+        >
+          <span
+            className="carousel-control-prev-icon"
+            aria-hidden="true"
+          ></span>
+          <span className="visually-hidden">Anterior</span>
+        </button>
+        <button
+          className="carousel-control-next"
+          type="button"
+          data-bs-target="#homeCarousel"
+          data-bs-slide="next"
+        >
+          <span
+            className="carousel-control-next-icon"
+            aria-hidden="true"
+          ></span>
+          <span className="visually-hidden">Siguiente</span>
+        </button>
+      </div>
 
-      <ul className="about-list">
-        <li>
-          📝 <strong>Inscribirse</strong> en las materias disponibles.
-        </li>
-        <li>
-          📚 <strong>Acceder</strong> al material de estudio.
-        </li>
-        <li>
-          🎥 <strong>Ver</strong> clases en video y material complementario.
-        </li>
-        <li>
-          ✍️ <strong>Realizar</strong> los exámenes correspondientes.
-        </li>
-        <li>
-          📊 <strong>Obtener</strong> su nota final basada en el promedio de los
-          exámenes.
-        </li>
-      </ul>
+      {/* Contenido Informativo */}
+      <section className="mt-5">
+        <h2 className="text-center">PRESENTE</h2>
+        <p className="text-justify">
+          Le saludamos en el nombre del Señor Jesús y le invitamos a{" "}
+          <strong>
+            Capacitarse para un mejor y más eficiente servicio al Señor
+          </strong>
+          .
+        </p>
+        <p className="text-justify">
+          Nuestro SEMINARIO BÍBLICO <strong>“ESCUELA DE MISIONES”</strong> le
+          ofrece prepararse bíblicamente con una orientación Misionera y de
+          expansión del Evangelio con la visión desde “casa”, “…hasta los
+          confines de la tierra”.
+        </p>
+        <p className="text-justify">
+          <strong>Conforme al Plan de Estudios presente en este folleto</strong>
+          , el curso es de un período de (4 cuatro) años en el que materias por
+          año, desde Marzo a Noviembre, haciendo un total de (36) treinta y seis
+          materias.
+        </p>
+        <p className="text-justify">
+          Cada materia se dicta en una semana por mes de Lunes a Viernes, (3
+          tres) horas diarias, haciendo (5 cinco) horas mensuales, completando
+          el total de (14) catorce horas (quincenas cuatrimestrales) por año.
+        </p>
+        <p className="text-justify">
+          Al completar todo el Plan de Estudios (4 años) se entrega el{" "}
+          <strong>Certificado de Estudios Bíblicos y Teológicos.</strong>
+        </p>
 
-      <h3 className="about-subtitle">🗓️ Funcionamiento</h3>
-      <p>
-        📌 <strong>Calendario Académico:</strong> Las materias se dictan de{" "}
-        <strong>marzo a noviembre</strong> de cada año. Cada una inicia el{" "}
-        <strong>día 1º del mes</strong> y finaliza el{" "}
-        <strong>último día del mismo</strong>.
-      </p>
+        <h2 className="text-center mt-5">OBJETIVOS</h2>
+        <p className="text-justify">
+          Nuestro objetivo es la preparación integral del alumno en lo
+          espiritual y académico para un mejor desenvolvimiento social.
+        </p>
+        <p className="text-justify">
+          En cuanto a su espiritualidad el SEMINARIO BÍBLICO{" "}
+          <strong>“ESCUELA DE MISIONES”</strong>, a través del estudio
+          sistemático de la palabra de Dios en manera profunda y relevante, lo
+          capacita para un mejor conocimiento y relación con el Creador.
+        </p>
+        <p className="text-justify">
+          Al inscribirse, sin costo de inscripción, el alumno recibe la
+          <strong> “SOLICITUD DE INSCRIPCIÓN”</strong> debidamente firmada y
+          cumplimentada ante la firma de Autorización de su Pastor y el
+          <strong> “RECLAMO INTERNO”</strong> donde encontrará el reglamento
+          académico administrativo.
+        </p>
+        <p className="text-center mt-4">
+          <strong>“ESTE ES EL TIEMPO DE DIOS”</strong>
+        </p>
 
-      <p>
-        📌 <strong>Evaluaciones:</strong> Los alumnos deben completar sus
-        exámenes a través del Campus Virtual antes de la fecha límite.
-      </p>
-
-      <h3 className="about-subtitle">📝 Inscripción</h3>
-      <p>
-        Para comenzar, los estudiantes deben registrarse en el{" "}
-        <strong>Campus Virtual</strong> y solicitar la inscripción en las
-        materias de su interés.
-      </p>
-
-      <h3 className="about-subtitle">💰 Costos y Pagos</h3>
-      <p>
-        <strong>✅ No se cobra inscripción.</strong> El costo por materia es:
-      </p>
-      <ul className="about-list">
-        <li>
-          🧍 <strong>$5.000</strong> por estudiante individual.
-        </li>
-        <li>
-          👫 <strong>$8.000</strong> por matrimonio.
-        </li>
-      </ul>
-
-      <p>
-        Los pagos pueden realizarse mediante{" "}
-        <strong>depósito, transferencia bancaria o MercadoPago</strong>. Se paga
-        por materia, y <strong>no es obligatorio abonar si no se cursa</strong>{" "}
-        en un mes específico.
-      </p>
-
-      <p className="about-footer">
-        📩 Para más información, no dude en <strong>consultarnos.</strong>
-      </p>
-    </section>
+        <div className="text-end">
+          <p>
+            <strong>MIGUEL ÁNGEL ZAMPERDI</strong>
+            <br />
+            PASTOR <br />
+            DIRECTOR
+          </p>
+        </div>
+      </section>
+    </div>
   );
 };
 
-export default About;
+export default HomePage;
