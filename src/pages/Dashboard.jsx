@@ -210,7 +210,16 @@ const Dashboard = () => {
 
       <main className="main-content">
         {activeSection === "home" && (
-          <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
+          <div className="home-section">
+            <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
+            <div className="image-container">
+              <img
+                src="/fotos/mes.jpg"
+                alt="Imagen de mes"
+                className="responsive-image"
+              />
+            </div>
+          </div>
         )}
 
         {activeSection === "libreta" && (
