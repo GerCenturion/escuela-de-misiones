@@ -322,8 +322,8 @@ const AdminDashboard = () => {
             <table className="table table-striped">
               <thead>
                 <tr>
+                  <th>Legajo</th>
                   <th>Nombre</th>
-                  <th>Email</th>
                   <th>Rol</th>
                   <th>Acciones</th>
                 </tr>
@@ -356,8 +356,8 @@ const AdminDashboard = () => {
 
                   .map((usuario) => (
                     <tr key={usuario._id}>
+                      <td>{usuario.legajo}</td>
                       <td>{usuario.name}</td>
-                      <td>{usuario.email}</td>
                       <td>{usuario.role}</td>
                       <td>
                         <button
