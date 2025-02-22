@@ -1,9 +1,10 @@
 .container {
-    max-width: 1200px;
+    max-width: 600px;
   }
   
   .carousel-item img {
-    height: 500px;
+    height: 350px;
+  
     object-fit: cover;
   }
   
