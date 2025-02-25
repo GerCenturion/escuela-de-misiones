@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 🔥 Estado para mostrar u ocultar la contraseña
+  const [showPassword, setShowPassword] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -12,6 +12,24 @@ const Login = () => {
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // 🔥 Verificar si ya existe un token al montar el componente
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("role");
+
+    if (token && userRole) {
+      if (userRole === "admin") {
+        navigate("/admin-dashboard");
+      } else if (userRole === "profesor") {
+        navigate("/professor-dashboard");
+      } else if (userRole === "alumno") {
+        navigate("/dashboard");
+      } else {
+        setError("Rol desconocido. Contacte al administrador.");
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,8 +49,9 @@ const Login = () => {
         return;
       }
 
-      // Guardar token en localStorage para mantener la sesión
+      // Guardar token y rol en localStorage para mantener la sesión
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.user.role);
 
       if (data.user.role === "admin") {
         navigate("/admin-dashboard");
@@ -68,7 +87,17 @@ const Login = () => {
       }
 
       localStorage.setItem("token", data.token);
-      navigate("/dashboard");
+      localStorage.setItem("role", data.user.role);
+
+      if (data.user.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (data.user.role === "profesor") {
+        navigate("/professor-dashboard");
+      } else if (data.user.role === "alumno") {
+        navigate("/dashboard");
+      } else {
+        setError("Rol desconocido. Contacte al administrador.");
+      }
     } catch (error) {
       setError("Error al verificar código.");
     }
@@ -98,13 +127,12 @@ const Login = () => {
             <div className="mb-3 position-relative">
               <label className="form-label">Contraseña:</label>
               <input
-                type={showPassword ? "text" : "password"} // 🔥 Cambia entre texto y contraseña
+                type={showPassword ? "text" : "password"}
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              {/* 🔥 Botón para ver/ocultar contraseña */}
               <span
                 onClick={() => setShowPassword(!showPassword)}
                 className="position-absolute top-50 end-0 translate-middle-y me-3"
@@ -123,7 +151,6 @@ const Login = () => {
               Iniciar Sesión
             </button>
 
-            {/* 🔥 Botón de Recuperar Contraseña */}
             <div className="text-center mt-3">
               <button
                 type="button"

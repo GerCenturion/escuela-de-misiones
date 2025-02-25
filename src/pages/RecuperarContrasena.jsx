@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const RecuperarContrasena = () => {
@@ -12,6 +12,24 @@ const RecuperarContrasena = () => {
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  // 🔥 Verificar si ya existe un token al montar el componente
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("role");
+
+    if (token && userRole) {
+      if (userRole === "admin") {
+        navigate("/admin-dashboard");
+      } else if (userRole === "profesor") {
+        navigate("/professor-dashboard");
+      } else if (userRole === "alumno") {
+        navigate("/dashboard");
+      } else {
+        setError("Rol desconocido. Contacte al administrador.");
+      }
+    }
+  }, [navigate]);
 
   const handleRequestCode = async () => {
     try {
@@ -102,13 +120,12 @@ const RecuperarContrasena = () => {
             />
             <label className="form-label">Nueva Contraseña:</label>
             <input
-              type={showPassword ? "text" : "password"} // 🔥 Cambia entre texto y contraseña
+              type={showPassword ? "text" : "password"}
               className="form-control mb-3"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-            {/* 🔥 Botón para ver/ocultar contraseña */}
             <span
               onClick={() => setShowPassword(!showPassword)}
               className="position-absolute top-50 end-0 translate-middle-y me-3"
