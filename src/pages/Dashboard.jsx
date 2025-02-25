@@ -234,7 +234,6 @@ const Dashboard = () => {
           <section>
             <h1>Materias Disponibles</h1>
 
-            {/* ✅ Mostrar el Spinner mientras las materias se cargan */}
             {loadingMaterias ? (
               <Spinner />
             ) : (
@@ -242,7 +241,7 @@ const Dashboard = () => {
                 {availableMaterias.map((materia) => {
                   const estadoInscripcion =
                     inscriptionStatus[materia._id] || "No Inscrito";
-                  const userId = userData?._id; // 🔥 Extraemos el userId de userData
+                  const userId = userData?._id;
 
                   return (
                     <div
@@ -262,23 +261,35 @@ const Dashboard = () => {
                           <span className="badge badge-warning">Pendiente</span>
                         )}
                         {estadoInscripcion === "Aceptado" && (
-                          <span className="badge badge-success">Aceptado</span>
+                          <span className="badge badge-success">Inscripto</span>
                         )}
                         {estadoInscripcion === "Rechazado" && (
                           <span className="badge badge-danger">Rechazado</span>
                         )}
+                        {estadoInscripcion === "No Inscrito" && (
+                          <span className="badge badge-secondary">
+                            No Inscrito
+                          </span>
+                        )}
                       </div>
 
-                      {/* Botón de inscripción */}
+                      {/* Botón de acceso siempre visible */}
+                      <div className="materia-action">
+                        <Link
+                          to={`/materia/${materia._id}`}
+                          state={{ userId, estadoInscripcion }}
+                          className="btn-materia"
+                        >
+                          Acceder
+                        </Link>
+                      </div>
+
+                      {/* Botón de inscripción oculto si está Aceptado */}
                       <div className="materia-action">
                         {estadoInscripcion === "Aceptado" ? (
-                          <Link
-                            to={`/materia/${materia._id}`}
-                            state={{ userId }} // 🔥 Pasamos userId como estado
-                            className="btn-materia"
-                          >
-                            Acceder
-                          </Link>
+                          <span className="badge bg-success text-white">
+                            Ya estás inscripto
+                          </span>
                         ) : (
                           <button
                             className="btn-materia"

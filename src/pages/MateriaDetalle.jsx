@@ -1,35 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import VideoPlayer from "../components/VideoPlayer";
-import ListaExamenes from "../components/ListaExamenes";
 import Spinner from "../components/Spinner";
 
 const MateriaDetalle = () => {
   const { id } = useParams();
-  const userId = location.state?.userId || null;
+  const location = useLocation();
+  const estadoInscripcion = location.state?.estadoInscripcion || "No Inscrito";
   const navigate = useNavigate();
   const [materia, setMateria] = useState(null);
-  const [examenes, setExamenes] = useState([]);
   const [error, setError] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
-  const [usuarioId, setUsuarioId] = useState(
-    localStorage.getItem("usuarioId") || null
-  );
-
-  useEffect(() => {
-    if (!usuarioId && userId) {
-      setUsuarioId(userId);
-      localStorage.setItem("usuarioId", userId); // 🔥 Guarda el ID en localStorage para persistencia
-    }
-  }, [userId, usuarioId]);
 
   useEffect(() => {
     const fetchMateria = async () => {
       try {
-        console.log(
-          `📡 Cargando materia desde ${API_URL}/materias/completo/${id}`
-        );
         const response = await fetch(`${API_URL}/materias/completo/${id}`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -40,9 +26,7 @@ const MateriaDetalle = () => {
         }
 
         const data = await response.json();
-        console.log("🟢 Materia obtenida:", data);
         setMateria(data);
-        setExamenes(data.examenes || []);
       } catch (error) {
         console.error("❌ Error en fetchMateria:", error);
         setError(error.message);
@@ -50,7 +34,7 @@ const MateriaDetalle = () => {
     };
 
     fetchMateria();
-  }, [id, token, usuarioId]);
+  }, [id, token]);
 
   if (error) {
     return <div className="alert alert-danger">{error}</div>;
@@ -115,13 +99,34 @@ const MateriaDetalle = () => {
         <p>No hay videos disponibles.</p>
       )}
 
-      {/* Exámenes Disponibles - Componente separado */}
-      <ListaExamenes
-        examenes={examenes}
-        usuarioId={usuarioId}
-        API_URL={API_URL}
-        token={token}
-      />
+      {/* Exámenes Disponibles - Solo para usuarios inscritos */}
+      {estadoInscripcion === "Aceptado" && (
+        <>
+          <h2 className="mt-4">Exámenes</h2>
+          {materia.examenes.length > 0 ? (
+            <ul className="list-group">
+              {materia.examenes.map((examen, index) => (
+                <li
+                  key={index}
+                  className="list-group-item d-flex justify-content-between align-items-center"
+                >
+                  <span>{examen.title}</span>
+                  <button className="btn btn-success btn-sm">
+                    Realizar Examen
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No hay exámenes disponibles.</p>
+          )}
+        </>
+      )}
+      {estadoInscripcion !== "Aceptado" && (
+        <div className="alert alert-warning mt-4">
+          Debes estar inscrito para acceder a los exámenes.
+        </div>
+      )}
     </div>
   );
 };
