@@ -104,6 +104,170 @@ main h1 {
   text-align: center;
 }
 
+/* Materias - Diseño Moderno */
+.materias-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center; /* Centra las tarjetas */
+}
+
+.materia-card {
+  width: 320px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease;
+}
+
+.materia-card:hover {
+  transform: translateY(-5px);
+}
+
+.materia-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.materia-level {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.materia-profesor {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 15px;
+}
+
+/* Estados de inscripción con mejor estilo */
+.inscription-status {
+  margin-bottom: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.badge-pendiente {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-aceptado {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-rechazado {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Botón bien alineado */
+.materia-action {
+  margin-top: 10px;
+}
+
+.btn-materia {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn-materia:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* 🔹 Ajustes para pantallas pequeñas */
+@media screen and (max-width: 768px) {
+  .menu-hamburguesa {
+    display: block; /* Se muestra el menú hamburguesa */
+  }
+
+  .sidebar {
+    transform: translateX(-100%); /* Oculto por defecto */
+  }
+
+  .sidebar.open {
+    transform: translateX(0); /* Se muestra cuando se abre */
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .materia-card {
+    width: 90%; /* Para mejor adaptabilidad */
+  }
+}
+.materias-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.materia-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  text-align: center;
+}
+
+.materia-card h3 {
+  margin-bottom: 10px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.button-group .btn {
+  flex: 1;
+  margin: 5px;
+}
+.home-section {
+  text-align: center;
+  padding: 20px;
+}
+
+.image-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.responsive-image {
+  width: 70%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
 .materias-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
