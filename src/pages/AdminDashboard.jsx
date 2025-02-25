@@ -556,35 +556,48 @@ const AdminDashboard = () => {
             <div className="materias-container">
               {materias
                 .filter((materia) => materia.isEnrollmentOpen)
-                .map((materia) => (
-                  <div
-                    key={materia._id}
-                    className="materia-card"
-                  >
-                    <h3>{materia.name}</h3>
-                    <p>
-                      <strong>Nivel:</strong> {materia.level}
-                    </p>
-                    <p>
-                      <strong>Profesor:</strong>{" "}
-                      {materia.professor?.name || "Sin asignar"}
-                    </p>
-                    <p>
-                      <strong>Alumnos Inscritos:</strong>{" "}
-                      {materia.students.length}
-                    </p>
-                    <div className="button-group">
-                      <button
-                        className="btn btn-primary"
-                        onClick={() =>
-                          navigate(`/admin/materias/${materia._id}`)
-                        }
-                      >
-                        Ingresar
-                      </button>
+                .map((materia) => {
+                  // Filtrar alumnos por estado
+                  const alumnosAceptados = materia.students.filter(
+                    (student) => student.status === "Aceptado"
+                  ).length;
+
+                  const alumnosPendientes = materia.students.filter(
+                    (student) => student.status === "Pendiente"
+                  ).length;
+
+                  return (
+                    <div
+                      key={materia._id}
+                      className="materia-card"
+                    >
+                      <h3>{materia.name}</h3>
+                      <p>
+                        <strong>Nivel:</strong> {materia.level}
+                      </p>
+                      <p>
+                        <strong>Profesor:</strong>{" "}
+                        {materia.professor?.name || "Sin asignar"}
+                      </p>
+                      <p className="alumnos-aceptados">
+                        ✅ Aceptados: {alumnosAceptados}
+                      </p>
+                      <p className="alumnos-pendientes">
+                        ⏳ Pendientes: {alumnosPendientes}
+                      </p>
+                      <div className="button-group">
+                        <button
+                          className="btn btn-primary"
+                          onClick={() =>
+                            navigate(`/admin/materias/${materia._id}`)
+                          }
+                        >
+                          Ingresar
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </section>
         )}
