@@ -178,9 +178,8 @@ const HomePage = () => {
         </p>
         <p>
           Conforme al Plan de Estudios el curso es de un período de 4 (cuatro)
-          cuatrimestres o 9 (nueve) materias por año, desde Marzo a Noviembre,
-          haciendo un total de 36 (treinta y seis) materias y seis materias más
-          de titulación (tesis y materias).
+          años con 9 (nueve) materias por año, desde Marzo a Noviembre, haciendo
+          un total de 36 (treinta y seis) materias.
         </p>
         <p>
           Al completar todo el Plan de Estudios (4 años) se entrega al alumno el{" "}
