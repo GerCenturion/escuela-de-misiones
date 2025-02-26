@@ -8,7 +8,6 @@ const CrearUsuario = () => {
 
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     role: "alumno",
     legajo: "",
     phoneCode: "54",
@@ -31,12 +30,7 @@ const CrearUsuario = () => {
     setError("");
 
     // Validar campos obligatorios
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.dni ||
-      !formData.password
-    ) {
+    if (!formData.name || !formData.dni || !formData.password) {
       setError("⚠️ Todos los campos obligatorios deben completarse.");
       setLoading(false);
       return;
@@ -86,7 +80,7 @@ const CrearUsuario = () => {
           />
         </div>
 
-        <div className="mb-3">
+        {/* <div className="mb-3">
           <label className="form-label">Correo Electrónico:</label>
           <input
             type="email"
@@ -96,7 +90,7 @@ const CrearUsuario = () => {
             onChange={handleChange}
             required
           />
-        </div>
+        </div> */}
 
         <div className="mb-3">
           <label className="form-label">DNI:</label>

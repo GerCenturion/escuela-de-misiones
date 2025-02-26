@@ -171,14 +171,14 @@ const Dashboard = () => {
         <h2 className="sidebar-title">Escuela de Misiones</h2>
         <nav className="sidebar-nav">
           <ul>
-            <li>
+            {/* <li>
               <button
                 className={activeSection === "home" ? "active" : ""}
                 onClick={() => handleSectionChange("home")}
               >
                 Inicio
               </button>
-            </li>
+            </li> */}
             <li>
               <button
                 className={activeSection === "materias" ? "active" : ""}
@@ -209,7 +209,7 @@ const Dashboard = () => {
       </aside>
 
       <main className="main-content">
-        {activeSection === "home" && (
+        {/* {activeSection === "home" && (
           <div className="home-section">
             <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
             <div className="image-container">
@@ -220,7 +220,7 @@ const Dashboard = () => {
               />
             </div>
           </div>
-        )}
+        )} */}
 
         {activeSection === "libreta" && (
           <LibretaIndividual

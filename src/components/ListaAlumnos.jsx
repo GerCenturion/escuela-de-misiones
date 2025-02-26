@@ -44,8 +44,9 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
               >
                 <div>
                   <p>
-                    <strong>{student.student.name}</strong> -{" "}
-                    {student.student.email}
+                    <strong>{student.student.name}</strong>
+                    {/* -{" "}
+                    {student.student.dni} */}
                   </p>
                   <p>
                     Estado actual:{" "}

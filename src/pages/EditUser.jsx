@@ -45,7 +45,7 @@ const EditUser = () => {
     // Validaciones antes de enviar
     if (
       !user.name.trim() ||
-      !user.email.trim() ||
+      !user.dni.trim() ||
       !user.legajo.trim() ||
       !user.phoneCode.trim() ||
       !user.phoneArea.trim() ||
@@ -116,12 +116,12 @@ const EditUser = () => {
         </div>
 
         <div className="mb-3">
-          <label className="form-label">Email:</label>
+          <label className="form-label">DNI:</label>
           <input
-            type="email"
+            type="dni"
             className="form-control"
-            value={user.email}
-            onChange={(e) => setUser({ ...user, email: e.target.value })}
+            value={user.dni}
+            onChange={(e) => setUser({ ...user, dni: e.target.value })}
           />
         </div>
 
