@@ -18,7 +18,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true); // 📌 Estado para el Spinner
   const [userData, setUserData] = useState(null);
-  const [activeSection, setActiveSection] = useState("usuarios");
+  const [activeSection, setActiveSection] = useState("verMaterias");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isProfessor, setIsProfessor] = useState(false);
   const navigate = useNavigate();

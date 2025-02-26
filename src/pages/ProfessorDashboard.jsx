@@ -13,7 +13,7 @@ const ProfessorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState("materias");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
