@@ -21,6 +21,14 @@ const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("verMaterias");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isProfessor, setIsProfessor] = useState(false);
+  const [sortConfig, setSortConfig] = useState({
+    key: "legajo",
+    direction: "asc",
+  });
+  const [sortConfigMaterias, setSortConfigMaterias] = useState({
+    key: "name",
+    direction: "asc",
+  });
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
@@ -93,6 +101,50 @@ const AdminDashboard = () => {
   }, [token, navigate]);
 
   if (loading) return <Spinner />;
+
+  const handleSortMaterias = (key) => {
+    let direction = "asc";
+    if (
+      sortConfigMaterias.key === key &&
+      sortConfigMaterias.direction === "asc"
+    ) {
+      direction = "desc";
+    }
+    setSortConfigMaterias({ key, direction });
+  };
+
+  const sortedMaterias = materias.sort((a, b) => {
+    const valueA = a[sortConfigMaterias.key] || "";
+    const valueB = b[sortConfigMaterias.key] || "";
+
+    if (valueA < valueB) {
+      return sortConfigMaterias.direction === "asc" ? -1 : 1;
+    }
+    if (valueA > valueB) {
+      return sortConfigMaterias.direction === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
+  // Función para manejar el ordenamiento
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Función para ordenar los usuarios
+  const sortedUsuarios = usuarios.sort((a, b) => {
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? -1 : 1;
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
 
   const handleDeleteMateria = async (id) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta materia?")) {
@@ -291,7 +343,7 @@ const AdminDashboard = () => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Buscar por nombre o email..."
+                placeholder="Buscar por nombre o legajo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -306,76 +358,87 @@ const AdminDashboard = () => {
                 <option value="profesor">Profesor</option>
                 <option value="admin">Administrador</option>
               </select>
-
-              <select
-                className="form-select"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="name-asc">Nombre (A-Z)</option>
-                <option value="name-desc">Nombre (Z-A)</option>
-                <option value="email-asc">Email (A-Z)</option>
-                <option value="email-desc">Email (Z-A)</option>
-              </select>
             </div>
 
             <table className="table table-striped">
-              <thead>
-                <tr>
-                  <th>Legajo</th>
-                  <th>Nombre</th>
-                  <th>Rol</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuarios
-                  .filter(
-                    (usuario) =>
-                      usuario.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                      usuario.email
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                  )
-                  .filter((usuario) =>
-                    roleFilter ? usuario.role === roleFilter : true
-                  )
-                  .sort((a, b) => {
-                    if (sortOption === "name-asc")
-                      return a.name.localeCompare(b.name);
-                    if (sortOption === "name-desc")
-                      return b.name.localeCompare(a.name);
-                    if (sortOption === "email-asc")
-                      return a.email.localeCompare(b.email);
-                    if (sortOption === "email-desc")
-                      return b.email.localeCompare(a.email);
-                    return 0;
-                  })
-
-                  .map((usuario) => (
-                    <tr key={usuario._id}>
-                      <td>{usuario.legajo}</td>
-                      <td>{usuario.name}</td>
-                      <td>{usuario.role}</td>
-                      <td>
-                        <button
-                          className="btn btn-danger btn-sm me-2"
-                          onClick={() => handleDeleteUsuario(usuario._id)}
-                        >
-                          Eliminar
-                        </button>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => navigate(`/admin/edit/${usuario._id}`)}
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th
+                      onClick={() => handleSort("legajo")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Legajo{" "}
+                      {sortConfig.key === "legajo"
+                        ? sortConfig.direction === "asc"
+                          ? "⬆️"
+                          : "⬇️"
+                        : ""}
+                    </th>
+                    <th
+                      onClick={() => handleSort("name")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Nombre{" "}
+                      {sortConfig.key === "name"
+                        ? sortConfig.direction === "asc"
+                          ? "⬆️"
+                          : "⬇️"
+                        : ""}
+                    </th>
+                    <th
+                      onClick={() => handleSort("role")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Rol{" "}
+                      {sortConfig.key === "role"
+                        ? sortConfig.direction === "asc"
+                          ? "⬆️"
+                          : "⬇️"
+                        : ""}
+                    </th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedUsuarios
+                    .filter(
+                      (usuario) =>
+                        usuario.name
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()) ||
+                        usuario.legajo
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                    )
+                    .filter((usuario) =>
+                      roleFilter ? usuario.role === roleFilter : true
+                    )
+                    .map((usuario) => (
+                      <tr key={usuario._id}>
+                        <td>{usuario.legajo}</td>
+                        <td>{usuario.name}</td>
+                        <td>{usuario.role}</td>
+                        <td>
+                          <button
+                            className="btn btn-danger btn-sm me-2"
+                            onClick={() => handleDeleteUsuario(usuario._id)}
+                          >
+                            Eliminar
+                          </button>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() =>
+                              navigate(`/admin/edit/${usuario._id}`)
+                            }
+                          >
+                            Editar
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </table>
           </section>
         )}
@@ -449,35 +512,61 @@ const AdminDashboard = () => {
                 <option value="Habilitada">Habilitada</option>
                 <option value="Deshabilitada">Deshabilitada</option>
               </select>
-
-              {/* Ordenar */}
-              <select
-                className="form-select"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="name-asc">Nombre (A-Z)</option>
-                <option value="name-desc">Nombre (Z-A)</option>
-                <option value="level-asc">Nivel (A-Z)</option>
-                <option value="level-desc">Nivel (Z-A)</option>
-                <option value="professor-asc">Profesor (A-Z)</option>
-                <option value="professor-desc">Profesor (Z-A)</option>
-              </select>
             </div>
 
             {/* Tabla de materias */}
             <table className="table table-striped">
               <thead>
                 <tr>
-                  <th>Nombre</th>
-                  <th>Nivel</th>
-                  <th>Profesor</th>
-                  <th>Inscripción</th>
+                  <th
+                    onClick={() => handleSortMaterias("name")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Nombre{" "}
+                    {sortConfigMaterias.key === "name"
+                      ? sortConfigMaterias.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th
+                    onClick={() => handleSortMaterias("level")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Nivel{" "}
+                    {sortConfigMaterias.key === "level"
+                      ? sortConfigMaterias.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th
+                    onClick={() => handleSortMaterias("professor")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Profesor{" "}
+                    {sortConfigMaterias.key === "professor"
+                      ? sortConfigMaterias.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th
+                    onClick={() => handleSortMaterias("isEnrollmentOpen")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Inscripción{" "}
+                    {sortConfigMaterias.key === "isEnrollmentOpen"
+                      ? sortConfigMaterias.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {materias
+                {sortedMaterias
                   .filter((materia) =>
                     materia.name
                       .toLowerCase()
@@ -498,25 +587,6 @@ const AdminDashboard = () => {
                         : !materia.isEnrollmentOpen
                       : true
                   )
-                  .sort((a, b) => {
-                    if (sortOption === "name-asc")
-                      return a.name.localeCompare(b.name);
-                    if (sortOption === "name-desc")
-                      return b.name.localeCompare(a.name);
-                    if (sortOption === "level-asc")
-                      return a.level.localeCompare(b.level);
-                    if (sortOption === "level-desc")
-                      return b.level.localeCompare(a.level);
-                    if (sortOption === "professor-asc")
-                      return (a.professor?.name || "").localeCompare(
-                        b.professor?.name || ""
-                      );
-                    if (sortOption === "professor-desc")
-                      return (b.professor?.name || "").localeCompare(
-                        a.professor?.name || ""
-                      );
-                    return 0;
-                  })
                   .map((materia) => (
                     <tr key={materia._id}>
                       <td>{materia.name}</td>
