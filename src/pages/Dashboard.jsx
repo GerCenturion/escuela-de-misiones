@@ -7,7 +7,7 @@ import Spinner from "../components/Spinner";
 import "../Dashboard.css";
 
 const Dashboard = () => {
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState("materias");
   const [userData, setUserData] = useState(null);
   const [availableMaterias, setAvailableMaterias] = useState([]);
   const [inscriptionStatus, setInscriptionStatus] = useState({});
@@ -244,10 +244,7 @@ const Dashboard = () => {
                   const userId = userData?._id;
 
                   return (
-                    <div
-                      key={materia._id}
-                      className="materia-card"
-                    >
+                    <div key={materia._id} className="materia-card">
                       <h3 className="materia-title">{materia.name}</h3>
                       <p className="materia-level">{materia.level}</p>
                       <p className="materia-profesor">
@@ -273,10 +270,14 @@ const Dashboard = () => {
                         )}
                       </div>
 
-                      {/* Botón de acceso siempre visible */}
+                      {/* Redirigir al componente correcto según la inscripción */}
                       <div className="materia-action">
                         <Link
-                          to={`/materia/${materia._id}`}
+                          to={
+                            estadoInscripcion === "Aceptado"
+                              ? `/materia/${materia._id}`
+                              : `/oyente/${materia._id}`
+                          }
                           state={{ userId, estadoInscripcion }}
                           className="btn-materia"
                         >
@@ -284,7 +285,7 @@ const Dashboard = () => {
                         </Link>
                       </div>
 
-                      {/* Botón de inscripción oculto si está Aceptado */}
+                      {/* Botón de inscripción si no está Aceptado */}
                       <div className="materia-action">
                         {estadoInscripcion === "Aceptado" ? (
                           <span className="badge bg-success text-white">
@@ -311,11 +312,7 @@ const Dashboard = () => {
         )}
 
         {activeSection === "profile" && (
-          <Perfil
-            userData={userData}
-            API_URL={API_URL}
-            token={token}
-          />
+          <Perfil userData={userData} API_URL={API_URL} token={token} />
         )}
       </main>
     </div>

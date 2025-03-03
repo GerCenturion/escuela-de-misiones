@@ -23,6 +23,7 @@ import ExamenCompletar from "./pages/ExamenCompletar";
 import CorregirExamen from "./pages/CorregirExamen";
 import ExamenRevisar from "./components/ExamenRevisar";
 import RehacerExamen from "./pages/RehacerExamen";
+import Oyente from "./pages/Oyente";
 import RecuperarContrasena from "./pages/RecuperarContrasena";
 import WhatsAppButton from "./components/WhatsAppButton";
 import CrearUsuario from "./pages/CrearUsuario";
@@ -149,30 +150,14 @@ const App = () => {
           />
 
           {/* Otras rutas */}
-          <Route
-            path="/materia/:id"
-            element={<MateriaDetalle />}
-          />
-          <Route
-            path="/examen/:examenId"
-            element={<ExamenCompletar />}
-          />
-          <Route
-            path="/corregir/:examenId"
-            element={<CorregirExamen />}
-          />
-          <Route
-            path="/revisar-examen/:examenId"
-            element={<ExamenRevisar />}
-          />
+          <Route path="/oyente/:id" element={<Oyente />} />
+          <Route path="/materia/:id" element={<MateriaDetalle />} />
+          <Route path="/examen/:examenId" element={<ExamenCompletar />} />
+          <Route path="/corregir/:examenId" element={<CorregirExamen />} />
+          <Route path="/revisar-examen/:examenId" element={<ExamenRevisar />} />
           <Route
             path="/examen/:examenId/rehacer"
-            element={
-              <RehacerExamen
-                API_URL={API_URL}
-                token={token}
-              />
-            }
+            element={<RehacerExamen API_URL={API_URL} token={token} />}
           />
 
           <Route
@@ -191,10 +176,7 @@ const App = () => {
               </AdminRoute>
             }
           />
-          <Route
-            path="/admin/materias/create"
-            element={<CreateMateria />}
-          />
+          <Route path="/admin/materias/create" element={<CreateMateria />} />
           <Route
             path="/professor/materias/:id"
             element={
@@ -203,10 +185,7 @@ const App = () => {
               </ProfessorRoute>
             }
           />
-          <Route
-            path="/admin/materias/:id"
-            element={<AdminMateriaPage />}
-          />
+          <Route path="/admin/materias/:id" element={<AdminMateriaPage />} />
         </Routes>
         <WhatsAppButton />
       </div>
