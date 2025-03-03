@@ -21,6 +21,31 @@ const Dashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
+  const [showSpinner, setShowSpinner] = useState(true);
+  const [loadingButton, setLoadingButton] = useState(false);
+
+  const handleButtonClick = async (materiaId) => {
+    if (loadingButton) return; // Evita múltiples clics mientras está en proceso
+
+    setLoadingButton(true); // Deshabilita el botón
+
+    await handleInscripcion(materiaId); // Llama a la función original
+
+    setTimeout(() => {
+      setLoadingButton(false); // Habilita el botón después de 4 segundos
+    }, 4000);
+  };
+
+  useEffect(() => {
+    if (!loadingMaterias) {
+      setShowSpinner(true); // Mantiene el spinner visible inicialmente
+      const timer = setTimeout(() => {
+        setShowSpinner(false); // Oculta el spinner después de 5 segundos
+      }, 5000);
+
+      return () => clearTimeout(timer); // Limpia el timeout si el componente se desmonta
+    }
+  }, [loadingMaterias]);
 
   useEffect(() => {
     if (!token) {
@@ -97,7 +122,9 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error al obtener estado de inscripción:", error);
       } finally {
-        setLoadingInscripcion(false); // ✅ Ocultar Spinner al finalizar
+        setTimeout(() => {
+          setLoadingInscripcion(false); // ✅ Ocultar Spinner después de 5 segundos
+        }, 5000);
       }
     };
 
@@ -234,7 +261,7 @@ const Dashboard = () => {
           <section>
             <h1>Materias Disponibles</h1>
 
-            {loadingMaterias ? (
+            {loadingMaterias || showSpinner ? (
               <Spinner />
             ) : (
               <div className="materias-container">
@@ -294,8 +321,10 @@ const Dashboard = () => {
                         ) : (
                           <button
                             className="btn-materia"
-                            disabled={estadoInscripcion === "Pendiente"}
-                            onClick={() => handleInscripcion(materia._id)}
+                            disabled={
+                              estadoInscripcion === "Pendiente" || loadingButton
+                            }
+                            onClick={() => handleButtonClick(materia._id)}
                           >
                             {estadoInscripcion === "Pendiente"
                               ? "Solicitud Enviada"
