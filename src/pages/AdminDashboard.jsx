@@ -11,7 +11,6 @@ const AdminDashboard = () => {
   const [materias, setMaterias] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [sortOption, setSortOption] = useState("name-asc");
   const [levelFilter, setLevelFilter] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
   const [enrollmentFilter, setEnrollmentFilter] = useState("");
@@ -33,6 +32,31 @@ const AdminDashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
 
+  const getEnrollmentLevels = (usuario) => {
+    if (!materias || materias.length === 0) return "";
+  
+    const enrolledLevels = materias
+      .filter((materia) =>
+        materia.students.some((enrollment) => enrollment.student._id === usuario._id)
+      )
+      .map((materia) => {
+        switch (materia.level) {
+          case "Elemental":
+            return "E";
+          case "Avanzado 1":
+            return "1";
+          case "Avanzado 2":
+            return "2";
+          case "Avanzado 3":
+            return "3";
+          default:
+            return "";
+        }
+      });
+  
+    return enrolledLevels.length > 0 ? `(${[...new Set(enrolledLevels)].join(", ")})` : "";
+  };
+    
   useEffect(() => {
     const handleResize = () => {
       setIsSidebarOpen(window.innerWidth > 768);
@@ -361,84 +385,84 @@ const AdminDashboard = () => {
             </div>
 
             <table className="table table-striped">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th
-                      onClick={() => handleSort("legajo")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Legajo{" "}
-                      {sortConfig.key === "legajo"
-                        ? sortConfig.direction === "asc"
-                          ? "⬆️"
-                          : "⬇️"
-                        : ""}
-                    </th>
-                    <th
-                      onClick={() => handleSort("name")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Nombre{" "}
-                      {sortConfig.key === "name"
-                        ? sortConfig.direction === "asc"
-                          ? "⬆️"
-                          : "⬇️"
-                        : ""}
-                    </th>
-                    <th
-                      onClick={() => handleSort("role")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Rol{" "}
-                      {sortConfig.key === "role"
-                        ? sortConfig.direction === "asc"
-                          ? "⬆️"
-                          : "⬇️"
-                        : ""}
-                    </th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedUsuarios
-                    .filter(
-                      (usuario) =>
-                        usuario.name
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()) ||
-                        usuario.legajo
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-                    )
-                    .filter((usuario) =>
-                      roleFilter ? usuario.role === roleFilter : true
-                    )
-                    .map((usuario) => (
-                      <tr key={usuario._id}>
-                        <td>{usuario.legajo}</td>
-                        <td>{usuario.name}</td>
-                        <td>{usuario.role}</td>
-                        <td>
-                          <button
-                            className="btn btn-danger btn-sm me-2"
-                            onClick={() => handleDeleteUsuario(usuario._id)}
-                          >
-                            Eliminar
-                          </button>
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() =>
-                              navigate(`/admin/edit/${usuario._id}`)
-                            }
-                          >
-                            Editar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+              <thead>
+                <tr>
+                  <th
+                    onClick={() => handleSort("legajo")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Legajo{" "}
+                    {sortConfig.key === "legajo"
+                      ? sortConfig.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th
+                    onClick={() => handleSort("name")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Nombre{" "}
+                    {sortConfig.key === "name"
+                      ? sortConfig.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th
+                    onClick={() => handleSort("role")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Rol{" "}
+                    {sortConfig.key === "role"
+                      ? sortConfig.direction === "asc"
+                        ? "⬆️"
+                        : "⬇️"
+                      : ""}
+                  </th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedUsuarios
+                  .filter(
+                    (usuario) =>
+                      usuario.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()) ||
+                      usuario.legajo
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
+                  )
+                  .filter((usuario) =>
+                    roleFilter ? usuario.role === roleFilter : true
+                  )
+                  .map((usuario) => (
+                    <tr key={usuario._id}>
+                      <td>{usuario.legajo}</td>
+                      <td>
+                        {usuario.name}{" "}
+                        <strong>{getEnrollmentLevels(usuario)}</strong>
+                        {/* ✅ Ahora mostrará los niveles correctamente */}
+                      </td>
+                      <td>{usuario.role}</td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm me-2"
+                          onClick={() => handleDeleteUsuario(usuario._id)}
+                        >
+                          Eliminar
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => navigate(`/admin/edit/${usuario._id}`)}
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
             </table>
           </section>
         )}
@@ -493,10 +517,7 @@ const AdminDashboard = () => {
                     (name, index, self) => name && self.indexOf(name) === index
                   )
                   .map((profName, index) => (
-                    <option
-                      key={index}
-                      value={profName}
-                    >
+                    <option key={index} value={profName}>
                       {profName}
                     </option>
                   ))}
@@ -637,10 +658,7 @@ const AdminDashboard = () => {
                   ).length;
 
                   return (
-                    <div
-                      key={materia._id}
-                      className="materia-card"
-                    >
+                    <div key={materia._id} className="materia-card">
                       <h3>{materia.name}</h3>
                       <p>
                         <strong>Nivel:</strong> {materia.level}
