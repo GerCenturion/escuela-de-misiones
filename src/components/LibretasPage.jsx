@@ -36,15 +36,12 @@ const LibretasPage = () => {
   }, [token]);
 
   // ✅ Formatear fecha en dd/mm/aa
-  const formatFecha = (fecha) => {
-    if (!fecha) return "N/A";
-    const date = new Date(fecha);
-    return date.toLocaleDateString("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-    });
-  };
+
+const formatFecha = (fecha) => {
+  if (!fecha) return "N/A";
+  const [year, month, day] = fecha.split("T")[0].split("-");
+  return `${day}/${month}/${year}`;
+};
 
   // ✅ Función para abrir el modal de edición
   const abrirModal = (libreta) => {

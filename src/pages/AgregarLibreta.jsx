@@ -1,44 +1,49 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../components/LibretaIndividual.css";
 
 const AgregarLibreta = () => {
+  const userRole = localStorage.getItem("role");
   const [alumnos, setAlumnos] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState("");
-  const [materiaSeleccionada, setMateriaSeleccionada] = useState("");
-  const [estadoFinal, setEstadoFinal] = useState("aprobado");
-  const [recibo, setRecibo] = useState("");
-  const [fechaDePago, setFechaDePago] = useState("");
-  const [fechaCierre, setFechaCierre] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [libretaAlumno, setLibretaAlumno] = useState([]);
   const [error, setError] = useState("");
-
+  const [materiasCargadas, setMateriasCargadas] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
+  const formatFecha = (fecha) => {
+    if (!fecha) return "";
+    const date = new Date(fecha);
+    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const alumnosRes = await fetch(`${API_URL}/usuarios/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const materiasRes = await fetch(`${API_URL}/materias`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const [alumnosRes, materiasRes] = await Promise.all([
+          fetch(`${API_URL}/usuarios/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/materias`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
         if (!alumnosRes.ok || !materiasRes.ok) {
-          throw new Error("Error al cargar datos");
+          throw new Error("Error al cargar alumnos o materias");
         }
 
         const alumnosData = await alumnosRes.json();
         const materiasData = await materiasRes.json();
 
-        setAlumnos(alumnosData);
+        const soloAlumnos = alumnosData.filter((usuario) => usuario.role === "alumno");
+        setAlumnos(soloAlumnos);
         setMaterias(materiasData);
       } catch (error) {
-        setError("Error al cargar alumnos y materias");
+        setError("Error al cargar alumnos o materias");
         console.error(error);
       }
     };
@@ -46,167 +51,196 @@ const AgregarLibreta = () => {
     fetchData();
   }, [token]);
 
-  const handleAlumnoSeleccionado = (nombre) => {
-    const alumno = alumnos.find((a) => a.name === nombre);
-    setAlumnoSeleccionado(alumno ? alumno._id : "");
-  };
+  useEffect(() => {
+    const fetchLibreta = async () => {
+      if (!alumnoSeleccionado) return;
 
-  const handleMateriaSeleccionada = (nombre) => {
-    const materia = materias.find((m) => m.name === nombre);
-    setMateriaSeleccionada(materia ? materia._id : "");
-  };
+      try {
+        const res = await fetch(`${API_URL}/materias/libreta/${alumnoSeleccionado}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+        const data = res.ok ? await res.json() : [];
+        setMateriasCargadas(data);
 
-    if (!alumnoSeleccionado || !materiaSeleccionada) {
-      alert("Debes seleccionar un Alumno y una Materia.");
-      return;
-    }
+        const merged = materias.map((materia) => {
+          const entry = data.find((lib) => lib.materia && (lib.materia._id === materia._id || lib.materia.name === materia.name));
+          const tieneDatos = Boolean(entry);
+          return {
+            _id: entry?._id || `nuevo-${materia._id}`,
+            alumno: entry?.alumno || alumnoSeleccionado,
+            materia: { _id: materia._id, name: materia.name },
+            estadoFinal: entry?.estadoFinal || "",
+            fechaCierre: formatFecha(entry?.fechaCierre),
+            pagoEstado: entry?.pagoEstado || (entry?.recibo ? "pagado" : "pendiente"),
+            fechaDePago: formatFecha(entry?.fechaDePago),
+            recibo: entry?.recibo || "",
+            tieneDatos,
+          };
+        });
 
-    const confirmacion = window.confirm(
-      "¿Estás seguro de que quieres agregar esta libreta?"
-    );
-
-    if (!confirmacion) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch(`${API_URL}/materias/manual`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+        setLibretaAlumno(merged);
+      } catch (err) {
+        console.error("Error al cargar libreta del alumno", err);
+        // No seteamos error para permitir crear libreta nueva
+        setMateriasCargadas([]);
+        const merged = materias.map((materia) => ({
+          _id: `nuevo-${materia._id}`,
           alumno: alumnoSeleccionado,
-          materia: materiaSeleccionada,
-          estadoFinal,
-          recibo,
-          fechaDePago,
-          fechaCierre,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al guardar la libreta");
+          materia: { _id: materia._id, name: materia.name },
+          estadoFinal: "",
+          fechaCierre: "",
+          pagoEstado: "pendiente",
+          fechaDePago: "",
+          recibo: "",
+          tieneDatos: false,
+        }));
+        setLibretaAlumno(merged);
       }
+    };
 
-      alert("Libreta agregada con éxito.");
-      navigate("/admin-dashboard");
-    } catch (error) {
-      console.error("Error al agregar la libreta:", error);
-      alert("Hubo un problema al guardar la libreta.");
-    } finally {
-      setIsSubmitting(false);
+    if (alumnoSeleccionado && materias.length > 0) {
+      fetchLibreta();
+    }
+  }, [alumnoSeleccionado, materias]);
+
+  const handleChange = (index, field, value) => {
+    const updated = [...libretaAlumno];
+    updated[index][field] = value;
+    setLibretaAlumno(updated);
+  };
+
+  const handleGuardarCambios = async () => {
+    try {
+      for (const libreta of libretaAlumno) {
+        const payload = {
+          alumno: libreta.alumno,
+          materia: libreta.materia._id,
+          estadoFinal: libreta.estadoFinal,
+          fechaCierre: libreta.fechaCierre,
+          pagoEstado: libreta.pagoEstado,
+          fechaDePago: libreta.fechaDePago,
+          recibo: libreta.recibo,
+        };
+
+        if (libreta._id.toString().startsWith("nuevo-")) {
+          await fetch(`${API_URL}/materias/manual`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          await fetch(`${API_URL}/materias/registropagos/${libreta._id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ recibo: libreta.recibo, fechaDePago: libreta.fechaDePago }),
+          });
+
+          await fetch(`${API_URL}/materias/libreta/${libreta._id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              alumno: libreta.alumno,
+              materia: libreta.materia._id,
+              estadoFinal: libreta.estadoFinal,
+              fechaCierre: libreta.fechaCierre,
+            }),
+          });
+        }
+      }
+      alert("Cambios guardados exitosamente");
+      navigate(0);
+    } catch (err) {
+      console.error("Error al guardar los cambios:", err);
+      alert("Error al guardar los cambios");
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Agregar Nueva Libreta</h2>
+    <div className="libreta-container">
+      <h2 className="libreta-title">Editar Libreta del Alumno</h2>
+      <button className="btn btn-secondary mb-3" onClick={() => navigate('/admin-dashboard')}>
+        Volver
+      </button>
       {error && <div className="alert alert-danger">{error}</div>}
 
-      <form onSubmit={handleSubmit}>
-        {/* 🔍 Campo combinado de búsqueda y selección para Alumno */}
-        <div className="mb-3">
-          <label className="form-label">Alumno:</label>
-          <input
-            type="text"
-            className="form-control"
-            list="lista-alumnos"
-            placeholder="Escribe para buscar o seleccionar..."
-            onChange={(e) => handleAlumnoSeleccionado(e.target.value)}
-          />
-          <datalist id="lista-alumnos">
-            {alumnos.map((alumno) => (
-              <option
-                key={alumno._id}
-                value={alumno.name}
-              >
-                {alumno.name} - {alumno.legajo || "Sin legajo"}
-              </option>
-            ))}
-          </datalist>
-        </div>
-
-        {/* 🔍 Campo combinado de búsqueda y selección para Materia */}
-        <div className="mb-3">
-          <label className="form-label">Materia:</label>
-          <input
-            type="text"
-            className="form-control"
-            list="lista-materias"
-            placeholder="Escribe para buscar o seleccionar..."
-            onChange={(e) => handleMateriaSeleccionada(e.target.value)}
-          />
-          <datalist id="lista-materias">
-            {materias.map((materia) => (
-              <option
-                key={materia._id}
-                value={materia.name}
-              >
-                {materia.name} - {materia.level}
-              </option>
-            ))}
-          </datalist>
-        </div>
-
-        {/* Estado Final */}
-        <div className="mb-3">
-          <label className="form-label">Estado Final:</label>
-          <select
-            className="form-select"
-            value={estadoFinal}
-            onChange={(e) => setEstadoFinal(e.target.value)}
-          >
-            <option value="aprobado">Aprobado</option>
-            <option value="recursa">Recursa</option>
-          </select>
-        </div>
-        {/* Fecha de Cierre */}
-        <div className="mb-3">
-          <label className="form-label">Fecha de Cierre:</label>
-          <input
-            type="date"
-            className="form-control"
-            value={fechaCierre}
-            onChange={(e) => setFechaCierre(e.target.value)}
-          />
-        </div>
-
-        {/* Recibo */}
-        <div className="mb-3">
-          <label className="form-label">Número de Recibo:</label>
-          <input
-            type="text"
-            className="form-control"
-            value={recibo}
-            onChange={(e) => setRecibo(e.target.value)}
-          />
-        </div>
-
-        {/* Fecha de Pago */}
-        <div className="mb-3">
-          <label className="form-label">Fecha de Pago:</label>
-          <input
-            type="date"
-            className="form-control"
-            value={fechaDePago}
-            onChange={(e) => setFechaDePago(e.target.value)}
-          />
-        </div>
-
-        {/* Botón de envío */}
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={isSubmitting}
+      <div className="mb-3">
+        <label className="form-label">Seleccionar Alumno:</label>
+        <select
+          className="form-select"
+          value={alumnoSeleccionado}
+          onChange={(e) => setAlumnoSeleccionado(e.target.value)}
         >
-          {isSubmitting ? "Guardando..." : "Guardar Libreta"}
-        </button>
-      </form>
+          <option value="">Seleccione un alumno</option>
+          {alumnos.map((alumno) => (
+            <option key={alumno._id} value={alumno._id}>
+              {alumno.name} - {alumno.legajo || "Sin legajo"}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {alumnoSeleccionado && (
+        <>
+          <table className="libreta-tabla">
+            <thead>
+              <tr>
+                <th>Materia</th>
+                <th>Estado</th>
+                <th>Fecha de Cierre</th>
+                <th>Pago</th>
+                <th>Fecha de Pago</th>
+                <th>Recibo N°</th>
+              </tr>
+            </thead>
+            <tbody>
+              {libretaAlumno.map((lib, index) => (
+                <tr key={lib._id} className={lib.tieneDatos ? "libreta-existente" : ""}>
+                  <td>{lib.materia.name}</td>
+                  <td>
+                    <select value={lib.estadoFinal} disabled={userRole !== 'admin'} onChange={(e) => handleChange(index, "estadoFinal", e.target.value)}
+                    >
+                      <option value="">--</option>
+                      <option value="aprobado">Aprobado</option>
+                      <option value="recursa">Recursa</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="date" value={lib.fechaCierre} disabled={userRole !== 'admin'} onChange={(e) => handleChange(index, "fechaCierre", e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <select value={lib.pagoEstado || "pendiente"} disabled={userRole !== 'admin'} onChange={(e) => handleChange(index, "pagoEstado", e.target.value)}
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="pagado">Pagó</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="date" value={lib.fechaDePago} disabled={userRole !== 'admin'} onChange={(e) => handleChange(index, "fechaDePago", e.target.value)}
+                    />
+                  </td>
+                  <td>
+                    <input type="text" value={lib.recibo || ""} disabled={userRole !== 'admin'} onChange={(e) => handleChange(index, "recibo", e.target.value)}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {userRole === 'admin' && <button className="btn btn-success mt-3" onClick={handleGuardarCambios}>
+            Guardar Cambios</button>}
+        </>
+      )}
     </div>
   );
 };
