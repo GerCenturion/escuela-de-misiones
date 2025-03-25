@@ -1,136 +1,245 @@
 import React, { useEffect, useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "./LibretaIndividual.css";
 
 const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
-  const [libreta, setLibreta] = useState([]);
+  const [formData, setFormData] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
 
-  // 🔥 Obtener todas las materias y la libreta del alumno
+  const formatFechaInput = (fecha) => {
+    if (!fecha) return "";
+    const date = new Date(fecha);
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().split("T")[0];
+  };
+
   useEffect(() => {
-    const fetchLibreta = async () => {
+    const fetchData = async () => {
       try {
-        if (!alumnoId) {
-          console.error("alumnoId no está definido");
-          return;
-        }
+        if (!alumnoId) return;
 
-        // 🔥 Obtener todas las materias disponibles
-        const materiasResponse = await fetch(`${API_URL}/materias`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const resMaterias = await fetch(`${API_URL}/materias`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!materiasResponse.ok) {
-          throw new Error("Error al obtener las materias");
-        }
-
-        const materiasData = await materiasResponse.json();
+        const materiasData = await resMaterias.json();
         setMaterias(materiasData);
 
-        // 🔥 Obtener la libreta del alumno
-        const libretaResponse = await fetch(
-          `${API_URL}/materias/libreta/${alumnoId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const resLibreta = await fetch(`${API_URL}/materias/libreta/${alumnoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        if (!libretaResponse.ok) {
-          throw new Error("Error al obtener la libreta");
-        }
+        let libretaData = [];
+        if (resLibreta.ok) libretaData = await resLibreta.json();
 
-        const libretaData = await libretaResponse.json();
-        setLibreta(libretaData);
-      } catch (error) {
-        console.error("Error al cargar la libreta:", error);
-        setError("Error al cargar la libreta");
+        const combined = materiasData.map((materia) => {
+          const entry = libretaData.find((lib) => lib.materia.name === materia.name);
+          return {
+            materiaId: materia._id,
+            materiaName: materia.name,
+            nivel: materia.level,
+            estadoFinal: entry?.estadoFinal || "",
+            fechaCierre: entry?.fechaCierre ? formatFechaInput(entry.fechaCierre) : "",
+            recibo: entry?.recibo !== "No registrado" ? entry?.recibo : "",
+            fechaDePago:
+              entry?.fechaDePago && entry?.fechaDePago !== "No registrado"
+                ? formatFechaInput(entry.fechaDePago)
+                : "",
+            pago: entry?.recibo && entry?.recibo !== "No registrado" ? "Pagó" : "Pendiente",
+            libretaId: entry?._id || null,
+          };
+        });
+
+        setFormData(combined);
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        setError("No se pudo cargar la libreta del alumno");
       }
     };
 
-    fetchLibreta();
-  }, [API_URL, token, alumnoId]);
+    fetchData();
+  }, [alumnoId]);
 
-  if (error) return <div className="alert alert-danger">{error}</div>;
-  if (materias.length === 0) return <div>Cargando...</div>;
-
-  // ✅ Formatear fecha en dd/mm/aa
-  const formatFecha = (fecha) => {
-    if (!fecha) return "";
-    const date = new Date(fecha);
-    return date.toLocaleDateString("es-AR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
+  const handleChange = (index, field, value) => {
+    setFormData((prev) => {
+      const updated = [...prev];
+      updated[index][field] = value;
+      return updated;
     });
   };
 
-  // ✅ Formatear estado de pago
-  const formatPago = (recibo) => {
-    return recibo ? "Pagó" : "Pendiente";
+  const handlePagoChange = (index, value) => {
+    setFormData((prev) => {
+      const updated = [...prev];
+      updated[index].pago = value;
+      if (value === "Pendiente") {
+        updated[index].recibo = "";
+        updated[index].fechaDePago = "";
+      }
+      return updated;
+    });
   };
 
-  // ✅ Combinar todas las materias con la libreta del alumno
-  const combinedData = materias.map((materia) => {
-    const entry = libreta.find((lib) => lib.materia.name === materia.name);
-    return {
-      nivel: materia.level,
-      nombre: materia.name,
-      estadoFinal: entry ? entry.estadoFinal : "", // Si no existe, mostrar en blanco
-      fechaCierre: entry ? entry.fechaCierre : "",
-      recibo: entry ? entry.recibo : "",
-      pago: entry ? formatPago(entry.recibo) : "",
-    };
-  });
+  const handleGuardarCambios = async () => {
+    for (const item of formData) {
+      const body = {
+        alumno: alumnoId,
+        materia: item.materiaId,
+        estadoFinal: item.estadoFinal,
+        fechaCierre: item.fechaCierre || null,
+        recibo: item.pago === "Pagó" ? item.recibo : "",
+        fechaDePago: item.pago === "Pagó" ? item.fechaDePago : null,
+      };
+
+      const url = item.libretaId
+        ? `${API_URL}/materias/libreta/${item.libretaId}`
+        : `${API_URL}/materias/manual`;
+
+      const method = item.libretaId ? "PUT" : "POST";
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          throw new Error("Error al guardar cambios");
+        }
+      } catch (err) {
+        console.error("Error al guardar libreta:", err);
+        alert("Error al guardar cambios en alguna materia.");
+      }
+    }
+    alert("Cambios guardados con éxito");
+  };
+
+  if (error) return <div className="alert alert-danger">{error}</div>;
+  if (!formData.length) return <div>Cargando...</div>;
+
+  const generarPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Libreta del Alumno", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Nombre: ${nombre}`, 14, 30);
+    doc.text(`Legajo: ${legajo || "No registrado"}`, 14, 37);
+  
+    const rows = formData.map((lib) => [
+      lib.nivel,
+      lib.materiaName,
+      lib.estadoFinal === "aprobado"
+        ? "Aprobado"
+        : lib.estadoFinal === "recursa"
+        ? "Recursa"
+        : "",
+      lib.fechaCierre ? formatFechaInput(lib.fechaCierre).split("-").reverse().join("/") : "",
+      lib.pago,
+      lib.fechaDePago ? formatFechaInput(lib.fechaDePago).split("-").reverse().join("/") : "",
+      lib.recibo || "",
+    ]);
+  
+    autoTable(doc, {
+      startY: 45,
+      head: [["Nivel", "Materia", "Estado", "Fecha Cierre", "Pago", "Fecha Pago", "Recibo"]],
+      body: rows,
+    });
+  
+    doc.save(`libreta-${nombre.replace(/\s+/g, "_")}.pdf`);
+  };  
 
   return (
     <div className="libreta-container">
-      <h2 className="libreta-title">Libreta de Calificaciones</h2>
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {/* ✅ Mostrar nombre y legajo del alumno */}
+      <h2 className="libreta-title">Libreta del Alumno</h2>
       <div className="alumno-info">
         <h3>{nombre}</h3>
         <p>Legajo: {legajo || "No registrado"}</p>
       </div>
+      <div className="mt-3 d-flex gap-3">
 
+    <button className="btn btn-outline-primary" onClick={generarPDF}>
+      Descargar PDF
+    </button>
+  </div>
       <table className="libreta-tabla">
         <thead>
           <tr>
-            <th>Nivel</th>
             <th>Materia</th>
             <th>Estado</th>
             <th>Fecha de Cierre</th>
             <th>Pago</th>
+            <th>Fecha de Pago</th>
             <th>Recibo N°</th>
           </tr>
         </thead>
         <tbody>
-          {combinedData.map((entry, index) => (
+          {formData.map((lib, index) => (
             <tr key={index}>
-              <td>{entry.nivel}</td>
-              <td>{entry.nombre}</td>
+              <td>{lib.materiaName}</td>
               <td>
-                {entry.estadoFinal === "aprobado"
-                  ? "Aprobado"
-                  : entry.estadoFinal === "recursa"
-                  ? "Recursa"
-                  : ""}
+                <select
+                  value={lib.estadoFinal}
+                  onChange={(e) => handleChange(index, "estadoFinal", e.target.value)}
+                  disabled={userRole !== "admin"}
+                >
+                  <option value="">--</option>
+                  <option value="aprobado">Aprobado</option>
+                  <option value="recursa">Recursa</option>
+                </select>
               </td>
-              <td>{formatFecha(entry.fechaCierre)}</td>
-              <td>{entry.pago}</td>
-              <td>{entry.recibo || ""}</td>
+              <td>
+                <input
+                  type="date"
+                  value={lib.fechaCierre}
+                  onChange={(e) => handleChange(index, "fechaCierre", e.target.value)}
+                  disabled={userRole !== "admin"}
+                />
+              </td>
+              <td>
+                <select
+                  value={lib.pago}
+                  onChange={(e) => handlePagoChange(index, e.target.value)}
+                  disabled={userRole !== "admin"}
+                >
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Pagó">Pagó</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="date"
+                  value={lib.fechaDePago}
+                  onChange={(e) => handleChange(index, "fechaDePago", e.target.value)}
+                  disabled={userRole !== "admin" || lib.pago !== "Pagó"}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={lib.recibo}
+                  onChange={(e) => handleChange(index, "recibo", e.target.value)}
+                  disabled={userRole !== "admin" || lib.pago !== "Pagó"}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {userRole === "admin" && (
+        <button className="btn btn-success mt-3" onClick={handleGuardarCambios}>
+          Guardar Cambios
+        </button>
+      )}
     </div>
   );
 };
