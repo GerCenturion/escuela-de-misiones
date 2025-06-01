@@ -12,12 +12,12 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
   const userRole = localStorage.getItem("role");
 
   const formatFechaInput = (fecha) => {
-    if (!fecha) return "";
-    const date = new Date(fecha);
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - offset * 60000);
-    return localDate.toISOString().split("T")[0];
-  };
+  if (!fecha || isNaN(new Date(fecha))) return "";
+  const date = new Date(fecha);
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+  return localDate.toISOString().split("T")[0];
+};
 
   useEffect(() => {
     const fetchData = async () => {
