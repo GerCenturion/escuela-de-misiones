@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import Spinner from "../components/Spinner"; // ✅ importado
+import Spinner from "../components/Spinner";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./LibretaIndividual.css";
 
 const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
   const [formData, setFormData] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ estado de carga
+  const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
@@ -47,8 +49,11 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
             nivel: materia.level,
             estadoFinal: entry?.estadoFinal || "",
             fechaCierre: entry?.fechaCierre ? formatFechaInput(entry.fechaCierre) : "",
-            recibo: entry?.recibo || "",
-            fechaDePago: entry?.fechaDePago ? formatFechaInput(entry.fechaDePago) : "",
+            recibo: entry?.recibo === "No registrado" ? "" : entry?.recibo || "",
+            fechaDePago:
+              entry?.fechaDePago && entry.fechaDePago !== "No registrado"
+                ? formatFechaInput(entry.fechaDePago)
+                : "",
             libretaId: entry?._id || null,
           };
         });
@@ -67,24 +72,24 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
     setFormData((prev) => {
       const updated = [...prev];
       updated[index][field] = value;
-
-      if (field === "pago" && value === "Pendiente") {
-        updated[index].recibo = "";
-        updated[index].fechaDePago = "";
-      }
-
       return updated;
     });
   };
 
   const handleGuardarCambios = async () => {
-    setLoading(true); // ✅ inicia spinner
+    setLoading(true);
     for (const item of formData) {
       const isNuevo = !item.libretaId;
       const isPagado = item.recibo && item.recibo.trim() !== "";
       const tieneDatos = item.estadoFinal || item.fechaCierre || isPagado;
 
       if (isNuevo && !tieneDatos) continue;
+
+      if ((item.recibo && !item.fechaDePago) || (!item.recibo && item.fechaDePago)) {
+        toast.error("El recibo y la fecha de pago deben completarse juntos.");
+        setLoading(false);
+        return;
+      }
 
       const body = {
         alumno: alumnoId,
@@ -113,12 +118,12 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
         if (!res.ok) throw new Error("Error al guardar cambios");
       } catch (err) {
         console.error("Error al guardar libreta:", err);
-        alert("Error al guardar cambios en alguna materia.");
+        toast.error("Error al guardar cambios en alguna materia.");
       }
     }
 
-    alert("Cambios guardados con éxito");
-    setLoading(false); // ✅ termina spinner
+    toast.success("Cambios guardados con éxito");
+    setLoading(false);
   };
 
   const handleKeyDown = (e) => {
@@ -144,7 +149,7 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
         ? "Recursa"
         : "",
       lib.fechaCierre ? formatFechaInput(lib.fechaCierre).split("-").reverse().join("/") : "",
-      lib.recibo ? "Pagó" : "Pendiente",
+      lib.recibo && lib.recibo.trim() !== "" ? "Pagado" : "Pendiente",
       lib.fechaDePago ? formatFechaInput(lib.fechaDePago).split("-").reverse().join("/") : "",
       lib.recibo || "",
     ]);
@@ -159,11 +164,12 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
   };
 
   if (error) return <div className="alert alert-danger">{error}</div>;
-  if (!formData.length) return <div>Cargando...</div>;
-  if (loading) return <Spinner />; // ✅ spinner visual
+  if (!formData.length && !loading) return <div>Cargando datos del alumno...</div>;
+  if (loading) return <Spinner />;
 
   return (
     <div className="libreta-container" onKeyDown={handleKeyDown} tabIndex={0}>
+      <ToastContainer position="top-center" autoClose={3000} />
       <h2 className="libreta-title">Libreta del Alumno</h2>
       <div className="alumno-info">
         <h3>{nombre}</h3>
@@ -174,71 +180,58 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
           Descargar PDF
         </button>
       </div>
+
       <table className="libreta-tabla">
         <thead>
           <tr>
             <th>Materia</th>
             <th>Estado</th>
             <th>Fecha de Cierre</th>
-            <th>Pago</th>
             <th>Fecha de Pago</th>
             <th>Recibo N°</th>
           </tr>
         </thead>
         <tbody>
-          {formData.map((lib, index) => {
-            const pago = lib.recibo ? "Pagó" : "Pendiente";
-            return (
-              <tr key={index}>
-                <td>{lib.materiaName}</td>
-                <td>
-                  <select
-                    value={lib.estadoFinal}
-                    onChange={(e) => handleChange(index, "estadoFinal", e.target.value)}
-                    disabled={userRole !== "admin"}
-                  >
-                    <option value="">--</option>
-                    <option value="aprobado">Aprobado</option>
-                    <option value="recursa">Recursa</option>
-                  </select>
-                </td>
-                <td>
-                  <input
-                    type="date"
-                    value={lib.fechaCierre}
-                    onChange={(e) => handleChange(index, "fechaCierre", e.target.value)}
-                    disabled={userRole !== "admin"}
-                  />
-                </td>
-                <td>
-                  <select
-                    value={pago}
-                    onChange={(e) => handleChange(index, "pago", e.target.value)}
-                    disabled={userRole !== "admin"}
-                  >
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Pagó">Pagó</option>
-                  </select>
-                </td>
-                <td>
-                  <input
-                    type="date"
-                    value={lib.fechaDePago}
-                    onChange={(e) => handleChange(index, "fechaDePago", e.target.value)}
-                    disabled={userRole !== "admin" || pago !== "Pagó"}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    value={lib.recibo}
-                    onChange={(e) => handleChange(index, "recibo", e.target.value)}
-                    disabled={userRole !== "admin" || pago !== "Pagó"}
-                  />
-                </td>
-              </tr>
-            );
-          })}
+          {formData.map((lib, index) => (
+            <tr key={index}>
+              <td>{lib.materiaName}</td>
+              <td>
+                <select
+                  value={lib.estadoFinal}
+                  onChange={(e) => handleChange(index, "estadoFinal", e.target.value)}
+                  disabled={userRole !== "admin"}
+                >
+                  <option value="">--</option>
+                  <option value="aprobado">Aprobado</option>
+                  <option value="recursa">Recursa</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="date"
+                  value={lib.fechaCierre}
+                  onChange={(e) => handleChange(index, "fechaCierre", e.target.value)}
+                  disabled={userRole !== "admin"}
+                />
+              </td>
+              <td>
+                <input
+                  type="date"
+                  value={lib.fechaDePago}
+                  onChange={(e) => handleChange(index, "fechaDePago", e.target.value)}
+                  disabled={userRole !== "admin"}
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={lib.recibo}
+                  onChange={(e) => handleChange(index, "recibo", e.target.value)}
+                  disabled={userRole !== "admin"}
+                />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
