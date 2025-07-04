@@ -8,51 +8,41 @@ const RecuperarContrasena = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [step, setStep] = useState(1); // 1 = Solicitar código, 2 = Ingresar código y nueva contraseña
+  const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // 🔥 Verificar si ya existe un token al montar el componente
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const userRole = localStorage.getItem("role");
+    const role = localStorage.getItem("role");
 
-    if (token && userRole) {
-      if (userRole === "admin") {
-        navigate("/admin-dashboard");
-      } else if (userRole === "profesor") {
-        navigate("/professor-dashboard");
-      } else if (userRole === "alumno") {
-        navigate("/dashboard");
-      } else {
-        setError("Rol desconocido. Contacte al administrador.");
-      }
+    if (token && role && step === 1) {
+      if (role === "admin") navigate("/admin-dashboard");
+      else if (role === "profesor") navigate("/professor-dashboard");
+      else if (role === "alumno") navigate("/dashboard");
     }
-  }, [navigate]);
+  }, [navigate, step]);
 
   const handleRequestCode = async () => {
     try {
       setError("");
       setStatus("Enviando código de recuperación...");
 
-      const response = await fetch(`${API_URL}/usuarios/recuperar`, {
+      const res = await fetch(`${API_URL}/usuarios/recuperar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dni }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al enviar código");
 
-      setStatus(
-        "📩 Código enviado por WhatsApp. Ingresa el código y tu nueva contraseña."
-      );
+      setStatus("📩 Código enviado por WhatsApp. Ingresalo junto a tu nueva contraseña.");
       setStep(2);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
+      setStatus("");
     }
   };
 
@@ -61,36 +51,31 @@ const RecuperarContrasena = () => {
       setError("");
       setStatus("Restableciendo contraseña...");
 
-      const response = await fetch(`${API_URL}/usuarios/restablecer`, {
+      const cleanCode = verificationCode.trim();
+      const res = await fetch(`${API_URL}/usuarios/restablecer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, verificationCode, newPassword }),
+        body: JSON.stringify({ dni, verificationCode: cleanCode, newPassword }),
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al restablecer contraseña");
 
-      setStatus(
-        "✅ Contraseña restablecida con éxito. Redirigiendo al inicio de sesión..."
-      );
-      setTimeout(() => navigate("/login"), 3000);
-    } catch (error) {
-      setError(error.message);
+      setStatus("✅ Contraseña restablecida con éxito. Redirigiendo...");
+      setTimeout(() => navigate("/login"), 2500);
+    } catch (err) {
+      setError(err.message);
+      setStatus("");
     }
   };
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div
-        className="card shadow-lg p-4"
-        style={{ maxWidth: "400px", width: "100%" }}
-      >
-        <h2 className="text-center mb-3">🔐 Recuperar Contraseña</h2>
+      <div className="card shadow-lg p-4" style={{ maxWidth: "400px", width: "100%" }}>
+        <h2 className="text-center mb-4">🔐 Recuperar Contraseña</h2>
 
         {step === 1 ? (
-          <div>
+          <>
             <label className="form-label">Ingrese su DNI:</label>
             <input
               type="text"
@@ -98,17 +83,13 @@ const RecuperarContrasena = () => {
               value={dni}
               onChange={(e) => setDni(e.target.value)}
               required
-              pattern="\d*"
             />
-            <button
-              onClick={handleRequestCode}
-              className="btn btn-primary w-100"
-            >
+            <button onClick={handleRequestCode} className="btn btn-primary w-100">
               Enviar Código de Recuperación
             </button>
-          </div>
+          </>
         ) : (
-          <div>
+          <>
             <label className="form-label">Código de Verificación:</label>
             <input
               type="text"
@@ -116,38 +97,34 @@ const RecuperarContrasena = () => {
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               required
-              pattern="\d*"
             />
+
             <label className="form-label">Nueva Contraseña:</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              className="form-control mb-3"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-            <span
-              onClick={() => setShowPassword(!showPassword)}
-              className="position-absolute top-50 end-0 translate-middle-y me-3"
-              style={{ cursor: "pointer" }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
-            <button
-              onClick={handleResetPassword}
-              className="btn btn-success w-100"
-            >
+            <div className="position-relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="form-control mb-3"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="position-absolute top-50 end-0 translate-middle-y me-3"
+                style={{ cursor: "pointer" }}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </span>
+            </div>
+
+            <button onClick={handleResetPassword} className="btn btn-success w-100">
               Restablecer Contraseña
             </button>
-          </div>
+          </>
         )}
 
-        {status && (
-          <div className="alert alert-info text-center mt-3">{status}</div>
-        )}
-        {error && (
-          <div className="alert alert-danger text-center mt-3">{error}</div>
-        )}
+        {status && <div className="alert alert-info text-center mt-3">{status}</div>}
+        {error && <div className="alert alert-danger text-center mt-3">{error}</div>}
       </div>
     </div>
   );
