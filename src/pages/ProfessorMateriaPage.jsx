@@ -290,13 +290,13 @@ const ProfessorMateriaPage = () => {
         )}
 
         {/* Botón de cierre de materia */}
-        <button
+        {/* <button
           className="btn btn-danger mb-3"
           onClick={cerrarMateria}
           disabled={isProcessing} // ✅ Deshabilitar mientras se procesa
         >
           Cerrar Materia
-        </button>
+        </button> */}
       </div>
 
       {/* <h2>Alumnos</h2>

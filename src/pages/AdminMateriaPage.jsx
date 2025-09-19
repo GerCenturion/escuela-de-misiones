@@ -262,12 +262,12 @@ const AdminMateriaPage = () => {
         Administrar Videos
       </button>
 
-      <button
+      {/* <button
         className="btn btn-danger mb-3"
         onClick={cerrarMateria}
       >
         Cerrar Materia
-      </button>
+      </button> */}
 
       <ListaAlumnos
         materia={materia} // Objeto con la materia y los alumnos
