@@ -331,7 +331,7 @@ const AdminDashboard = () => {
                 Perfil
               </button>
             </li>
-            {/* <Link to="/admin/agregar-libreta">Agregar Libreta</Link> */}
+            <Link to="/admin/agregar-libreta">Agregar Libreta</Link>
 
             <li>
               <LogoutButton />

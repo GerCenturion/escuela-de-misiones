@@ -85,16 +85,16 @@ const LibretaIndividual = ({ alumnoId, nombre, legajo }) => {
 
       if (isNuevo && !tieneDatos) continue;
 
-      if ((item.recibo && !item.fechaDePago) || (!item.recibo && item.fechaDePago)) {
-        toast.error("El recibo y la fecha de pago deben completarse juntos.");
-        setLoading(false);
-        return;
-      }
+      // if ((item.recibo && !item.fechaDePago) || (!item.recibo && item.fechaDePago)) {
+      //   toast.error("El recibo y la fecha de pago deben completarse juntos.");
+      //   setLoading(false);
+      //   return;
+      // }
 
       const body = {
         alumno: alumnoId,
         materia: item.materiaId,
-        estadoFinal: item.estadoFinal,
+        estadoFinal: item.estadoFinal || null,
         fechaCierre: item.fechaCierre || null,
         recibo: isPagado ? item.recibo : "",
         fechaDePago: isPagado ? item.fechaDePago : null,
