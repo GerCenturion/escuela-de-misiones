@@ -39,7 +39,7 @@ const About = () => {
 
       <p>
         📌 <strong>Evaluaciones:</strong> Los alumnos deben completar sus
-        exámenes a través del Campus Virtual antes de la fecha límite.
+        tareas a través del Campus Virtual antes de la fecha límite.
       </p>
 
       <h3 className="about-subtitle">📝 Inscripción</h3>
