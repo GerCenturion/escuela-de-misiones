@@ -3,397 +3,298 @@ import { useNavigate } from "react-router-dom";
 
 const Registration = () => {
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  // --- 1. ESTADO DEL FORMULARIO (Solo lo que ve el usuario) ---
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    dni: "",
+    birthdate: "",
     phoneCode: "54",
     phoneArea: "",
     phoneNumber: "",
-    phoneType: "",
-    birthdate: "",
-    dni: "",
-    address: "",
-    civilStatus: "",
-    profession: "",
-    church: "",
-    ministerialRole: "",
-    reason: "",
     password: "",
     confirmPassword: "",
   });
 
+  // --- 2. ESTADOS DE LA INTERFAZ ---
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasswords, setShowPasswords] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [showVerificationField, setShowVerificationField] = useState(false);
-  const [attempts, setAttempts] = useState(0);
 
-  const apiUrl = import.meta.env.VITE_API_URL; // Variable de entorno
+  // --- 3. ESTADOS DE FLUJO (Verificación / Usuario Existente) ---
+  const [showVerificationField, setShowVerificationField] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [existingUser, setExistingUser] = useState(null);
+
+  // --- AUTO-CORRECCIÓN DE TELÉFONOS (Quita 0 y 15) ---
+  const handleBlur = (e) => {
+    let { name, value } = e.target;
+    // Si es área y empieza con 0 (ej: 0341 -> 341)
+    if (name === "phoneArea" && value.startsWith("0")) {
+        setFormData(prev => ({ ...prev, [name]: value.substring(1) }));
+    }
+    // Si es número y empieza con 15 (ej: 156... -> 6...)
+    if (name === "phoneNumber" && value.startsWith("15") && value.length > 7) {
+        setFormData(prev => ({ ...prev, [name]: value.substring(2) }));
+    }
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    setError(""); // 🔥 Limpiar errores automáticamente al escribir
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) setError("");
   };
 
-  const validatePassword = (password) => {
-    const regex = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
-    return regex.test(password);
-  };
-
+  // --- ENVÍO DEL REGISTRO ---
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setStatus("");
 
-    if (!validatePassword(formData.password)) {
-      setError(
-        "La contraseña debe tener al menos 6 caracteres, una letra mayúscula y un número."
-      );
-      return;
+    // Validaciones básicas
+    if (!formData.name || !formData.dni || !formData.phoneArea || !formData.phoneNumber || !formData.password) {
+        setError("⚠️ Por favor completa todos los campos.");
+        return;
     }
-
+    if (formData.password.length < 6) {
+        setError("⚠️ La contraseña debe tener al menos 6 caracteres.");
+        return;
+    }
     if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      setError("⚠️ Las contraseñas no coinciden.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
+      // 🔥 TRUCO: Generamos datos de relleno para satisfacer al Backend
+      // Usamos el DNI para crear un email único ficticio
+      const fakeEmail = `${formData.dni}@sinemail.com`;
+      
+      const payload = {
+        ...formData,
+        email: fakeEmail, 
+        address: "No especificada",
+        civilStatus: "Soltero/a",
+        profession: "-",
+        church: "-",
+        ministerialRole: "-",
+        reason: "Registro Web",
+        profileImage: ""
+      };
+
+      console.log("Enviando al backend:", payload); 
+
       const response = await fetch(`${apiUrl}/usuarios`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload), 
       });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
+      const data = await response.json();
+
+      // CASO A: YA REGISTRADO
+      if (data.userExists || (data.message && data.message.includes("registrado"))) {
+        const phoneData = data.phone || "su celular";
+        setExistingUser({ phone: phoneData });
+        setIsSubmitting(false);
+        return; 
       }
 
-      const data = await response.json();
-      alert(data.message);
-      console.log("Datos enviados correctamente:", data);
+      // CASO B: ERROR DEL BACKEND (Ej: WhatsApp inválido)
+      if (!response.ok || data.res === false) {
+        throw new Error(data.message || data.error || "Error al procesar el registro.");
+      }
 
-      // 🔥 Mostrar mensaje de confirmación y campo de verificación
-      setStatus("📩 Código de verificación enviado por WhatsApp.");
+      // CASO C: ÉXITO
+      setStatus("📩 Código enviado a tu WhatsApp.");
       setShowVerificationField(true);
-      setAttempts(0);
+
     } catch (error) {
-      console.error("Error al enviar datos:", error);
-      setError("Hubo un problema al enviar la inscripción.");
+      console.error("Error en registro:", error);
+      setError(error.message); 
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // 📌 Verificar código de WhatsApp
+  // --- VERIFICACIÓN DEL CÓDIGO ---
   const handleVerifyCode = async () => {
+    if (!verificationCode) return;
+    setIsSubmitting(true);
+    
     try {
-      // 🔥 Limpiar estados previos antes de procesar la verificación
-      setError("");
-      setStatus("Verificando código...");
+        // 🔥 IMPORTANTE: Reconstruimos el mismo email falso para validar
+        // Si no enviamos esto, el backend no encuentra al usuario.
+        const fakeEmail = `${formData.dni}@sinemail.com`;
 
-      const response = await fetch(`${apiUrl}/usuarios/verificar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, verificationCode }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Código incorrecto o expirado.");
-      }
-
-      setStatus("✅ Verificación exitosa. Registro completado.");
-      setShowVerificationField(false);
-
-      // 🔥 Redirigir a la página de inicio de sesión después de 2 segundos
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } catch (error) {
-      console.error("Código incorrecto. Generando nuevo código...");
-
-      setError(
-        "❌ Código incorrecto. Se ha enviado un nuevo código a tu WhatsApp."
-      );
-      setStatus(""); // 🔥 Limpia el mensaje de estado
-
-      // Aumentar intentos
-      setAttempts(attempts + 1);
-
-      try {
-        const resendResponse = await fetch(
-          `${apiUrl}/usuarios/reenviar-codigo`,
-          {
+        const response = await fetch(`${apiUrl}/usuarios/verificar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: formData.email }),
-          }
-        );
+            body: JSON.stringify({ 
+                dni: formData.dni, 
+                email: fakeEmail, // <--- CLAVE PARA QUE NO DE ERROR 404
+                verificationCode 
+            }),
+        });
+        
+        const data = await response.json();
 
-        if (!resendResponse.ok) {
-          throw new Error("Error al reenviar el código.");
+        if (response.ok) {
+            alert("✅ ¡Cuenta verificada exitosamente!");
+            navigate("/login");
+        } else {
+            setError(data.message || data.error || "Código incorrecto.");
         }
-
-        setStatus("📩 Se ha enviado un nuevo código a tu WhatsApp.");
-        setVerificationCode(""); // 🔥 Limpiar campo de verificación solo después de reenviar el código
-      } catch (resendError) {
-        console.error("Error al reenviar código:", resendError);
-        setError(
-          "⚠️ Hubo un problema al enviar el nuevo código. Inténtalo nuevamente."
-        );
-      }
+    } catch (error) {
+        console.error(error);
+        setError("Error de conexión al verificar.");
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container my-5">
-      <h1 className="text-center mb-4">Registrarse</h1>
-      <form onSubmit={handleSubmit}>
-        {/* Nombre */}
-        <div className="mb-3">
-          <label className="form-label">Nombre/s y Apellido:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Email */}
-        <div className="mb-3">
-          <label className="form-label">Correo Electrónico:</label>
-          <input
-            type="email"
-            className="form-control"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Fecha de nacimiento */}
-        <div className="mb-3">
-          <label className="form-label">Fecha de nacimiento:</label>
-          <input
-            type="date"
-            className="form-control"
-            name="birthdate"
-            value={formData.birthdate}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* DNI */}
-        <div className="mb-3">
-          <label className="form-label">DNI Nº:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="dni"
-            value={formData.dni}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Dirección */}
-        <div className="mb-3">
-          <label className="form-label">
-            Domicilio (Ciudad/Provincia/Barrio/Calle y Número):
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Estado Civil */}
-        <div className="mb-3">
-          <label className="form-label">Estado Civil:</label>
-          <select
-            className="form-control"
-            name="civilStatus"
-            value={formData.civilStatus}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccione una opción</option>
-            <option value="Casado/a">Casado/a</option>
-            <option value="Soltero/a">Soltero/a</option>
-            <option value="Separado/a">Separado/a</option>
-            <option value="Viudo/a">Viudo/a</option>
-          </select>
-        </div>
-        {/* Profesión */}
-        <div className="mb-3">
-          <label className="form-label">Profesión:</label>
-          <input
-            type="text"
-            className="form-control"
-            name="profession"
-            value={formData.profession}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Teléfono */}
-        <div className="mb-3">
-          <label className="form-label">Teléfono:</label>
-          <div className="d-flex gap-2">
-            <input
-              type="text"
-              className="form-control"
-              name="phoneCode"
-              placeholder="Código de país (+54)"
-              value={formData.phoneCode}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="text"
-              className="form-control"
-              name="phoneArea"
-              placeholder="Área (341)"
-              value={formData.phoneArea}
-              onChange={handleChange}
-              required
-            />
-            <input
-              type="text"
-              className="form-control"
-              name="phoneNumber"
-              placeholder="Número de teléfono"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              required
-            />
+    <div className="container my-5" style={{ maxWidth: "500px" }}>
+      <div className="card shadow p-4 border-0">
+        
+        {/* --- VISTA 1: USUARIO YA EXISTE --- */ }
+        {existingUser ? (
+             <div className="text-center animate__animated animate__fadeIn">
+                <div className="alert alert-warning border-warning">
+                    <h4 className="fw-bold">⚠️ Ya estás registrado</h4>
+                    <p>El DNI <b>{formData.dni}</b> ya tiene cuenta.</p>
+                    <p className="small mb-0">¿Quieres recuperar tu contraseña?</p>
+                </div>
+                
+                <button 
+                    onClick={() => navigate("/recuperar")} 
+                    className="btn btn-primary w-100 mb-2 fw-bold"
+                >
+                    Sí, Restaurar Contraseña
+                </button>
+                
+                <button 
+                    onClick={() => setExistingUser(null)} 
+                    className="btn btn-outline-secondary w-100"
+                >
+                    No, corregir DNI
+                </button>
+             </div>
+
+        ) : !showVerificationField ? (
+          
+          /* --- VISTA 2: FORMULARIO DE REGISTRO --- */
+          <form onSubmit={handleSubmit}>
+            <h2 className="text-center mb-4" style={{color: "#005f73"}}>Registro</h2>
+            
+            {/* Nombre */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Nombre Completo</label>
+              <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} required />
+            </div>
+
+            {/* DNI y Fecha */}
+            <div className="row">
+                <div className="col-6 mb-3">
+                    <label className="form-label fw-bold">DNI</label>
+                    <input type="number" className="form-control" name="dni" value={formData.dni} onChange={handleChange} required />
+                </div>
+                <div className="col-6 mb-3">
+                    <label className="form-label fw-bold">Nacimiento</label>
+                    <input type="date" className="form-control" name="birthdate" value={formData.birthdate} onChange={handleChange} />
+                </div>
+            </div>
+
+            {/* WhatsApp */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">WhatsApp (Sin 0 ni 15)</label>
+              <div className="input-group">
+                <span className="input-group-text bg-white border-end-0">+</span>
+                <input 
+                    type="text" className="form-control border-start-0" 
+                    name="phoneCode" value={formData.phoneCode} onChange={handleChange} 
+                    required style={{maxWidth:"60px"}} 
+                />
+                <input 
+                    type="text" className="form-control" 
+                    name="phoneArea" placeholder="341" value={formData.phoneArea} onChange={handleChange} onBlur={handleBlur}
+                    required style={{maxWidth:"90px"}}
+                />
+                <input 
+                    type="text" className="form-control" 
+                    name="phoneNumber" placeholder="6123456" value={formData.phoneNumber} onChange={handleChange} onBlur={handleBlur}
+                    required 
+                />
+              </div>
+            </div>
+
+            {/* Contraseñas */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Contraseña</label>
+              <div className="input-group">
+                  <input 
+                    type={showPasswords ? "text" : "password"} 
+                    className="form-control" name="password" value={formData.password} onChange={handleChange} required minLength={6}
+                  />
+                  <button className="btn btn-outline-secondary" type="button" onClick={() => setShowPasswords(!showPasswords)} tabIndex="-1">
+                    {showPasswords ? "🙈" : "👁️"}
+                  </button>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label fw-bold">Confirmar</label>
+              <div className="input-group">
+                  <input 
+                    type={showPasswords ? "text" : "password"} 
+                    className="form-control" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required 
+                  />
+              </div>
+            </div>
+
+            {/* ERROR */}
+            {error && (
+                <div className="alert alert-danger py-2 d-flex align-items-center">
+                    <span className="me-2">🛑</span> {error}
+                </div>
+            )}
+
+            <button type="submit" className="btn btn-primary w-100 py-2 fw-bold" disabled={isSubmitting} style={{backgroundColor: "#005f73"}}>
+              {isSubmitting ? "Procesando..." : "Registrarme"}
+            </button>
+          </form>
+
+        ) : (
+          /* --- VISTA 3: VERIFICACIÓN --- */
+          <div className="text-center animate__animated animate__fadeIn">
+             <h3 className="text-primary fw-bold">🔑 Verifica tu Código</h3>
+             <p className="text-muted mb-4">{status}</p>
+             
+             <input 
+                type="text" className="form-control text-center mb-3 fs-2 letter-spacing-2" 
+                maxLength={6} placeholder="123456" 
+                value={verificationCode} onChange={(e) => setVerificationCode(e.target.value)}
+             />
+             
+             {error && <div className="alert alert-danger py-2">{error}</div>}
+             
+             <button 
+                className="btn btn-success w-100 py-2 fw-bold" 
+                onClick={handleVerifyCode} 
+                disabled={isSubmitting || verificationCode.length < 6}
+             >
+                {isSubmitting ? "Validando..." : "Confirmar y Entrar"}
+             </button>
+             
+             <button onClick={() => setShowVerificationField(false)} className="btn btn-link mt-3 text-muted text-decoration-none">
+                 ← Corregir número
+             </button>
           </div>
-        </div>
-
-        {/* Iglesia */}
-        <div className="mb-3">
-          <label className="form-label">
-            Nombre de la Iglesia a la que pertenece:
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            name="church"
-            value={formData.church}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Cargo Ministerial */}
-        <div className="mb-3">
-          <label className="form-label">
-            ¿Ocupa algún cargo ministerial actualmente? Especifique su
-            función/tarea:
-          </label>
-          <textarea
-            className="form-control"
-            name="ministerialRole"
-            value={formData.ministerialRole}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Razón */}
-        <div className="mb-3">
-          <label className="form-label">
-            ¿Por qué decidió inscribirse al Seminario?
-          </label>
-          <textarea
-            className="form-control"
-            name="reason"
-            value={formData.reason}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        {/* Contraseñas */}
-        <div className="mb-3 position-relative">
-          <label className="form-label">Contraseña:</label>
-          <input
-            type={showPasswords ? "text" : "password"}
-            className="form-control"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-          <small className="text-muted">
-            La contraseña debe tener al menos 6 caracteres, una letra mayúscula
-            y un número.
-          </small>
-          <span
-            onClick={() => setShowPasswords(!showPasswords)}
-            className="position-absolute top-50 end-0 translate-middle-y me-3"
-            style={{ cursor: "pointer" }}
-          >
-            {showPasswords ? "🙈" : "👁️"}
-          </span>
-        </div>
-        <div className="mb-3 position-relative">
-          <label className="form-label">Confirmar Contraseña:</label>
-          <input
-            type={showPasswords ? "text" : "password"}
-            className="form-control"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="btn btn-primary w-100"
-          style={{ backgroundColor: "#005f73" }}
-        >
-          Enviar Inscripción
-        </button>
-      </form>
-      {/* 🔥 Sección de verificación de código */}
-      {showVerificationField && (
-        <div className="mt-4">
-          <h3>🔑 Verificación de WhatsApp</h3>
-          <p>
-            Ingresa el código que recibiste en tu WhatsApp para completar el
-            registro.
-          </p>
-          <input
-            type="text"
-            className="form-control mb-2"
-            placeholder="Código de verificación"
-            value={verificationCode}
-            onChange={(e) => {
-              setVerificationCode(e.target.value);
-              setError(""); // 🔥 Limpiar errores cuando el usuario escribe un nuevo código
-            }}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault(); // 🔥 Evita que el formulario se envíe por defecto
-                handleVerifyCode(); // 🔥 Llama a la función de verificación
-              }
-            }}
-            required
-          />
-
-          <button
-            onClick={handleVerifyCode}
-            className="btn btn-success w-100"
-            disabled={!verificationCode.trim()} // 🔥 Deshabilita si el campo está vacío
-          >
-            Verificar Código
-          </button>
-        </div>
-      )}
-
-      {/* 🔥 Mostrar estado del registro */}
-      {status && <p className="text-success mt-3">{status}</p>}
-      {error && <p className="text-danger mt-3">{error}</p>}
+        )}
+      </div>
     </div>
   );
 };
