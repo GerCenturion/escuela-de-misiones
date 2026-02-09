@@ -32,12 +32,15 @@ const AdminDashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
 
-  const getEnrollmentLevels = (usuario) => {
+ const getEnrollmentLevels = (usuario) => {
     if (!materias || materias.length === 0) return "";
   
     const enrolledLevels = materias
       .filter((materia) =>
-        materia.students.some((enrollment) => enrollment.student._id === usuario._id)
+        // 1. Verificamos que materia.students exista (sea un array)
+        // 2. Usamos Optional Chaining (?.) para evitar el crash si enrollment.student es null
+        materia.students && 
+        materia.students.some((enrollment) => enrollment.student?._id === usuario._id)
       )
       .map((materia) => {
         switch (materia.level) {
