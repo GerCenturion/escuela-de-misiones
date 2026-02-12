@@ -4,10 +4,17 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
   const [filtro, setFiltro] = useState("");
   const [mostrarLista, setMostrarLista] = useState(false); // Controla si se despliega la lista
 
-  // Filtrar alumnos según el nombre ingresado en el input
-  const alumnosFiltrados = materia.students.filter((student) =>
-    student.student.name.toLowerCase().includes(filtro.toLowerCase())
-  );
+  // 🔥 CORRECCIÓN: Validamos que materia.students exista
+  const listaAlumnos = materia?.students || [];
+
+  // 🔥 CORRECCIÓN: Filtramos asegurando que el alumno exista antes de leer el nombre
+  const alumnosFiltrados = listaAlumnos.filter((inscripcion) => {
+    // 1. Si el usuario fue eliminado, 'inscripcion.student' es null. Lo saltamos.
+    if (!inscripcion.student) return false;
+
+    // 2. Si existe, aplicamos el filtro por nombre
+    return inscripcion.student.name.toLowerCase().includes(filtro.toLowerCase());
+  });
 
   return (
     <div className="mt-4">
@@ -37,38 +44,37 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
       {mostrarLista && (
         <ul className="list-group">
           {alumnosFiltrados.length > 0 ? (
-            alumnosFiltrados.map((student) => (
+            alumnosFiltrados.map((inscripcion) => (
               <li
-                key={student.student._id}
+                key={inscripcion.student._id}
                 className="list-group-item d-flex justify-content-between align-items-center"
               >
                 <div>
                   <p>
-                    <strong>{student.student.name}</strong>
-                    {/* -{" "}
-                    {student.student.dni} */}
+                    <strong>{inscripcion.student.name}</strong>
+                    {/* - {inscripcion.student.dni} */}
                   </p>
                   <p>
                     Estado actual:{" "}
                     <span
                       className={`badge ${
-                        student.status === "Pendiente"
+                        inscripcion.status === "Pendiente"
                           ? "bg-warning"
-                          : student.status === "Aceptado"
+                          : inscripcion.status === "Aceptado"
                           ? "bg-success"
                           : "bg-danger"
                       }`}
                     >
-                      {student.status || "Sin estado"}
+                      {inscripcion.status || "Sin estado"}
                     </span>
                   </p>
                 </div>
                 <div>
                   <select
                     className="form-select form-select-sm"
-                    value={student.status || ""}
+                    value={inscripcion.status || ""}
                     onChange={(e) =>
-                      gestionarInscripcion(student.student._id, e.target.value)
+                      gestionarInscripcion(inscripcion.student._id, e.target.value)
                     }
                   >
                     <option value="Pendiente">Pendiente</option>
