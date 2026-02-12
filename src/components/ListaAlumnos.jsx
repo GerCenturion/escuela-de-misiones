@@ -4,15 +4,16 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
   const [filtro, setFiltro] = useState("");
   const [mostrarLista, setMostrarLista] = useState(false); // Controla si se despliega la lista
 
-  // 🔥 CORRECCIÓN: Validamos que materia.students exista
-  const listaAlumnos = materia?.students || [];
+  // 🔥 CORRECCIÓN: Protección contra nulos
+  // Antes: materia.students.filter(...) fallaba si un student era null.
+  // Ahora: Verificamos que 'inscripcion.student' exista antes de filtrar.
+  const listaSegura = materia?.students || [];
 
-  // 🔥 CORRECCIÓN: Filtramos asegurando que el alumno exista antes de leer el nombre
-  const alumnosFiltrados = listaAlumnos.filter((inscripcion) => {
-    // 1. Si el usuario fue eliminado, 'inscripcion.student' es null. Lo saltamos.
+  const alumnosFiltrados = listaSegura.filter((inscripcion) => {
+    // 1. Si el usuario fue eliminado de la DB, 'inscripcion.student' es null. Lo saltamos.
     if (!inscripcion.student) return false;
 
-    // 2. Si existe, aplicamos el filtro por nombre
+    // 2. Si existe, aplicamos tu filtro original
     return inscripcion.student.name.toLowerCase().includes(filtro.toLowerCase());
   });
 

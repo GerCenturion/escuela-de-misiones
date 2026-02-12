@@ -11,11 +11,12 @@ const AdminMateriaPage = () => {
   const { id } = useParams();
   const [materia, setMateria] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Iniciamos cargando
   const [mostrarExamenForm, setMostrarExamenForm] = useState(false);
   const [mostrarExamenesModal, setMostrarExamenesModal] = useState(false);
   const [mostrarFileUploader, setMostrarFileUploader] = useState(false);
   const [mostrarVideoManager, setMostrarVideoManager] = useState(false);
+  
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -28,6 +29,13 @@ const AdminMateriaPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // 🔥 MANEJO DE TOKEN VENCIDO (401)
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("Error al cargar la materia");
       }
@@ -37,11 +45,17 @@ const AdminMateriaPage = () => {
     } catch (error) {
       setError("Error al cargar la materia");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   // Ejecutar la carga inicial
   useEffect(() => {
+    if (!token) {
+        navigate("/login");
+        return;
+    }
     fetchMateria();
   }, [id, token]);
 
@@ -58,6 +72,12 @@ const AdminMateriaPage = () => {
         },
         body: JSON.stringify({ fileUrl }),
       });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login");
+        return;
+      }
 
       if (!response.ok) throw new Error("Error al eliminar el archivo");
 
@@ -88,11 +108,16 @@ const AdminMateriaPage = () => {
         body: JSON.stringify({ url: videoUrl }),
       });
 
+      if (response.status === 401) {
+         localStorage.removeItem("token");
+         navigate("/login");
+         return;
+      }
+
       if (!response.ok) throw new Error("Error al eliminar el video");
 
       alert("Video eliminado con éxito");
 
-      // Actualizar el estado eliminando el video correspondiente
       setMateria((prevMateria) => ({
         ...prevMateria,
         videos: prevMateria.videos.filter((video) => video.url !== videoUrl),
@@ -103,17 +128,12 @@ const AdminMateriaPage = () => {
     }
   };
 
-  if (!materia) {
-    return <Spinner />;
-  }
-
   const cerrarMateria = async () => {
     if (!id) {
       alert("Error: No se encontró el ID de la materia.");
       return;
     }
 
-    // 📌 Primera confirmación con explicación detallada
     const confirmacion1 = confirm(
       "⚠️ ATENCIÓN: Al cerrar esta materia ocurrirá lo siguiente:\n\n" +
         "✅ Se guardarán las notas finales de los alumnos en la libreta.\n" +
@@ -125,25 +145,14 @@ const AdminMateriaPage = () => {
         "¿Estás seguro de que quieres continuar?"
     );
 
-    if (!confirmacion1) {
-      alert("Operación cancelada. La materia no ha sido cerrada.");
-      return;
-    }
+    if (!confirmacion1) return;
 
-    // 📌 Segunda confirmación antes de ejecutar la acción
     const confirmacion2 = confirm(
       "⚠️ ¿Estás completamente seguro? Esta acción es irreversible.\n\n" +
-        "Si cierras la materia, se eliminarán los datos mencionados anteriormente.\n" +
-        "Si tienes dudas, consulta con el administrador antes de proceder.\n\n" +
         "Presiona 'Aceptar' para continuar o 'Cancelar' para abortar."
     );
 
-    if (!confirmacion2) {
-      alert("Operación cancelada. La materia sigue activa.");
-      return;
-    }
-
-    console.log("Cerrando materia con ID:", id); // Depuración
+    if (!confirmacion2) return;
 
     try {
       const response = await fetch(`${API_URL}/materias/cerrar/${id}`, {
@@ -154,26 +163,28 @@ const AdminMateriaPage = () => {
         },
       });
 
-      const data = await response.json(); // Intentar parsear la respuesta
+      if (response.status === 401) {
+         localStorage.removeItem("token");
+         navigate("/login");
+         return;
+      }
+
+      const data = await response.json();
       if (!response.ok) {
-        console.error("Error en la respuesta del servidor:", data);
-        throw new Error(
-          data.message || "Error desconocido al cerrar la materia"
-        );
+        throw new Error(data.message || "Error desconocido al cerrar la materia");
       }
 
       alert(data.message);
-      navigate("/professor-dashboard"); // Redirigir después de cerrar
+      navigate("/admin-dashboard"); // Corregido redirección a admin
     } catch (error) {
       console.error("Error al cerrar materia:", error.message);
       alert(error.message || "No se pudo cerrar la materia.");
     }
   };
 
-  // Cambiar el estado de inscripción de un alumno
   const gestionarInscripcion = async (alumnoId, status) => {
     const currentStatus = materia.students.find(
-      (student) => student.student._id === alumnoId
+      (student) => student.student && student.student._id === alumnoId
     )?.status;
 
     if (currentStatus === status) {
@@ -181,15 +192,10 @@ const AdminMateriaPage = () => {
       return;
     }
 
-    const confirmChange = window.confirm(
-      `¿Estás seguro de que deseas cambiar el estado a "${status}"?`
-    );
-
-    if (!confirmChange) return;
+    if (!window.confirm(`¿Estás seguro de que deseas cambiar el estado a "${status}"?`)) return;
 
     setLoading(true);
 
-    if (loading) return <Spinner />;
     try {
       const response = await fetch(
         `${API_URL}/materias/gestionar-inscripcion/${id}`,
@@ -203,6 +209,12 @@ const AdminMateriaPage = () => {
         }
       );
 
+      if (response.status === 401) {
+         localStorage.removeItem("token");
+         navigate("/login");
+         return;
+      }
+
       if (!response.ok) {
         throw new Error("Error al gestionar la solicitud de inscripción");
       }
@@ -210,12 +222,11 @@ const AdminMateriaPage = () => {
       const data = await response.json();
       alert(data.message);
 
-      // Recargar los datos de la materia para reflejar los cambios
-
       setMateria((prevMateria) => ({
         ...prevMateria,
         students: prevMateria.students.map((student) =>
-          student.student._id === alumnoId ? { ...student, status } : student
+          // 🔥 Seguridad extra: verificar que student.student no sea null
+          student.student && student.student._id === alumnoId ? { ...student, status } : student
         ),
       }));
     } catch (error) {
@@ -227,57 +238,67 @@ const AdminMateriaPage = () => {
   };
 
   if (loading) return <Spinner />;
+  if (!materia) return <div className="alert alert-danger text-center mt-5">No se pudo cargar la materia.</div>;
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5 mb-5">
       <h1>{materia.name}</h1>
-      <p>Nivel: {materia.level}</p>
-      <button
-        className="btn btn-secondary mb-3 me-2"
-        onClick={() => navigate("/admin-dashboard")}
-      >
-        Volver al Dashboard
-      </button>
+      <p className="lead">Nivel: {materia.level}</p>
+      
+      <div className="d-flex flex-wrap gap-2 mb-4">
+        <button
+            className="btn btn-secondary"
+            onClick={() => navigate("/admin-dashboard")}
+        >
+            ⬅ Volver al Dashboard
+        </button>
 
-      {/* Botones para abrir modales */}
-      <button
-        className="btn btn-success mb-3 me-2"
-        onClick={() => setMostrarExamenForm(true)}
-      >
-        Crear Examen
-      </button>
+        <button
+            className="btn btn-success"
+            onClick={() => setMostrarExamenForm(true)}
+        >
+            📝 Crear Examen
+        </button>
+        
+        {/* Nuevo Botón para ver lista de exámenes */}
+        <button
+            className="btn btn-primary"
+            onClick={() => setMostrarExamenesModal(true)}
+        >
+            📋 Ver Exámenes
+        </button>
 
-      <button
-        className="btn btn-warning mb-3 me-2"
-        onClick={() => setMostrarFileUploader(true)}
-      >
-        Subir Archivo
-      </button>
+        <button
+            className="btn btn-warning"
+            onClick={() => setMostrarFileUploader(true)}
+        >
+            📂 Subir Archivo
+        </button>
 
-      <button
-        className="btn btn-info mb-3 me-2"
-        onClick={() => setMostrarVideoManager(true)}
-        onUploadSuccess={fetchMateria}
-      >
-        Administrar Videos
-      </button>
+        <button
+            className="btn btn-info text-white"
+            onClick={() => setMostrarVideoManager(true)}
+        >
+            🎥 Administrar Videos
+        </button>
 
-      <button
-        className="btn btn-danger mb-3"
-        onClick={cerrarMateria}
-      >
-        Cerrar Materia
-      </button>
+        <button
+            className="btn btn-danger"
+            onClick={cerrarMateria}
+        >
+            🔒 Cerrar Materia
+        </button>
+      </div>
 
       <ListaAlumnos
-        materia={materia} // Objeto con la materia y los alumnos
-        gestionarInscripcion={gestionarInscripcion} // Función para actualizar el estado del alumno
-        error={error} // Mensaje de error si lo hay
+        materia={materia}
+        gestionarInscripcion={gestionarInscripcion}
+        error={error}
       />
 
       {/* Listado de archivos */}
-      <h2 className="mt-4">Archivos Subidos</h2>
-      {materia.files.length > 0 ? (
+      <h3 className="mt-5 border-bottom pb-2">📂 Archivos Subidos</h3>
+      {materia.files && materia.files.length > 0 ? (
         <ul className="list-group">
           {materia.files.map((file, index) => (
             <li
@@ -305,12 +326,12 @@ const AdminMateriaPage = () => {
           ))}
         </ul>
       ) : (
-        <p>No hay archivos subidos para esta materia.</p>
+        <p className="text-muted">No hay archivos subidos para esta materia.</p>
       )}
 
       {/* Listado de videos */}
-      <h2 className="mt-4">Videos Asociados</h2>
-      {materia?.videos.length > 0 ? (
+      <h3 className="mt-5 border-bottom pb-2">🎥 Videos Asociados</h3>
+      {materia.videos && materia.videos.length > 0 ? (
         <ul className="list-group">
           {materia.videos.map((video, index) => (
             <li
@@ -321,6 +342,7 @@ const AdminMateriaPage = () => {
                 href={video.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-decoration-none fw-bold"
               >
                 {video.title}
               </a>
@@ -334,16 +356,20 @@ const AdminMateriaPage = () => {
           ))}
         </ul>
       ) : (
-        <p>No hay videos asociados.</p>
+        <p className="text-muted">No hay videos asociados.</p>
       )}
 
-      <ExamenesListModal materiaId={id} />
+      {/* --- MODALES --- */}
 
-      {/* Modal de Crear Examen */}
+      {/* ⚠️ CORRECCIÓN: Eliminado el <ExamenesListModal> suelto que tenías aquí */}
+
       {mostrarExamenForm && (
         <ExamenForm
           materiaId={id}
-          onClose={() => setMostrarExamenForm(false)}
+          onClose={() => {
+              setMostrarExamenForm(false);
+              fetchMateria(); // Recargar materia al cerrar para ver cambios
+          }}
         />
       )}
 
@@ -357,14 +383,20 @@ const AdminMateriaPage = () => {
       {mostrarFileUploader && (
         <FileUploader
           materiaId={id}
-          onClose={() => setMostrarFileUploader(false)}
+          onClose={() => {
+              setMostrarFileUploader(false);
+              fetchMateria();
+          }}
         />
       )}
 
       {mostrarVideoManager && (
         <VideoManagerModal
           materiaId={id}
-          onClose={() => setMostrarVideoManager(false)}
+          onClose={() => {
+              setMostrarVideoManager(false);
+              fetchMateria();
+          }}
         />
       )}
     </div>
