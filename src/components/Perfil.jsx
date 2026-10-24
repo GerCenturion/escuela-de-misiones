@@ -23,7 +23,7 @@ const isCampoIncompleto = (valor) => {
   return valoresInvalidos.includes(limpio);
 };
 
-// 📌 Validador de correo electrónico
+// 📌 Validador de correo electrónico real
 const isEmailInvalido = (email) => {
   if (!email) return true;
   const limpio = String(email).trim().toLowerCase();
@@ -65,7 +65,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
-  // Comprobar si faltan datos esenciales (solo para alumnos)
+  // Comprobar si faltan datos esenciales editables (solo alumnos)
   const checkIncompleteProfile = (data) => {
     if (!data) return false;
     if (data.role === "admin" || data.role === "profesor") return false;
@@ -75,11 +75,8 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
     }
 
     const campos = [
-      data.name,
       data.birthdate,
       data.address,
-      data.phoneArea,
-      data.phoneNumber,
       data.civilStatus,
       data.profession,
       data.church,
@@ -91,13 +88,9 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
 
   const populateFormData = (data) => {
     setFormData({
-      name: isCampoIncompleto(data?.name) ? "" : data.name,
-      email: isEmailInvalido(data?.email) ? "" : data.email, // Si tiene @sinemail.com o @noemail.com, lo deja en blanco
+      email: isEmailInvalido(data?.email) ? "" : data.email,
       birthdate: data?.birthdate ? data.birthdate.split("T")[0] : "",
       address: isCampoIncompleto(data?.address) ? "" : data.address,
-      phoneCode: isCampoIncompleto(data?.phoneCode) ? "54" : data.phoneCode,
-      phoneArea: isCampoIncompleto(data?.phoneArea) ? "" : data.phoneArea,
-      phoneNumber: isCampoIncompleto(data?.phoneNumber) ? "" : data.phoneNumber,
       civilStatus: isCampoIncompleto(data?.civilStatus) ? "Soltero/a" : data.civilStatus,
       profession: isCampoIncompleto(data?.profession) ? "" : data.profession,
       church: isCampoIncompleto(data?.church) ? "" : data.church,
@@ -134,7 +127,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
         setUserData(data);
         populateFormData(data);
 
-        // Si es alumno y tiene campos vacíos, "-" o email temporal
+        // Si es alumno y tiene campos vacíos o email temporal
         if (checkIncompleteProfile(data)) {
           setIsForced(true);
           setIsEditing(true);
@@ -161,19 +154,16 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
     setSuccess("");
 
     if (isForced || userData?.role === "alumno") {
-      // 1. Validar correo electrónico real
+      // Validar correo real
       if (isEmailInvalido(formData.email)) {
-        setError("Debes ingresar una dirección de correo electrónico real y válida (no se admiten correos @sinemail.com ni @noemail.com).");
+        setError("Debes ingresar una dirección de correo electrónico real y válida.");
         return;
       }
 
-      // 2. Validar campos obligatorios de texto
+      // Validar campos requeridos editables
       const camposRequeridos = [
-        { campo: "Nombre Completo", valor: formData.name },
         { campo: "Fecha de Nacimiento", valor: formData.birthdate },
         { campo: "Dirección / Localidad", valor: formData.address },
-        { campo: "Código de Área", valor: formData.phoneArea },
-        { campo: "Número de Teléfono", valor: formData.phoneNumber },
         { campo: "Profesión / Ocupación", valor: formData.profession },
         { campo: "Iglesia y Pastor", valor: formData.church },
         { campo: "Motivo de Inscripción", valor: formData.reason },
@@ -213,7 +203,6 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
 
       setSuccess("✅ ¡Tus datos fueron guardados con éxito!");
 
-      // Notificar al Dashboard que el perfil quedó completo y desbloquear
       if (onProfileComplete) {
         setTimeout(() => {
           onProfileComplete(usuarioActualizado);
@@ -284,7 +273,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
     <div className="perfil-container container py-4" style={{ maxWidth: "800px" }}>
       <h2 className="mb-3 text-center fw-bold">Perfil de Usuario</h2>
 
-      {/* Cartel explicativo si faltan datos */}
+      {/* Cartel informativo si está bloqueado */}
       {isForced && (
         <div className="alert alert-info d-flex align-items-center mb-4 p-3 shadow-sm border-info rounded-3">
           <FaInfoCircle className="fs-3 text-info me-3 flex-shrink-0" />
@@ -293,7 +282,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               Completa tus datos personales
             </h6>
             <p className="mb-0 small text-secondary">
-              Para ingresar al campus, completa todos los campos requeridos con tus datos reales (incluyendo tu correo electrónico personal) y presiona <strong>Guardar Datos</strong>.
+              Para ingresar al campus, completa los campos requeridos con tus datos reales y presiona <strong>Guardar Datos</strong>. Tu nombre, teléfono y DNI solo pueden ser editados por la administración.
             </p>
           </div>
         </div>
@@ -313,20 +302,34 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
           </div>
 
           <div className="row g-3">
+            {/* 🔒 NOMBRE Y APELLIDO (BLOQUEADO) */}
             <div className="col-md-6">
-              <label className="form-label fw-bold small text-muted">Nombre y Apellido *</label>
+              <label className="form-label fw-bold small text-muted">
+                Nombre y Apellido <span className="text-secondary">(Fijo)</span>
+              </label>
               <input
                 type="text"
-                name="name"
-                className="form-control"
-                placeholder="Ingresa tu nombre completo"
-                value={formData.name || ""}
-                onChange={handleInputChange}
-                required
-                disabled={savingProfile}
+                className="form-control bg-light"
+                value={userData?.name || ""}
+                disabled
+                title="Para cambiar tu nombre, contacta a la administración"
               />
             </div>
 
+            {/* DNI (BLOQUEADO) */}
+            <div className="col-md-6">
+              <label className="form-label fw-bold small text-muted">
+                DNI <span className="text-secondary">(Identificador)</span>
+              </label>
+              <input
+                type="text"
+                className="form-control bg-light"
+                value={userData?.dni || ""}
+                disabled
+              />
+            </div>
+
+            {/* CORREO REAL (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Correo Electrónico Real *</label>
               <input
@@ -341,6 +344,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
+            {/* FECHA DE NACIMIENTO (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Fecha de Nacimiento *</label>
               <input
@@ -354,16 +358,43 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
-            <div className="col-md-6">
-              <label className="form-label fw-bold small text-muted">DNI (Identificador)</label>
+            {/* 🔒 TELÉFONO - CÓD. PAÍS (BLOQUEADO) */}
+            <div className="col-md-3">
+              <label className="form-label fw-bold small text-muted">Cód. País</label>
               <input
                 type="text"
                 className="form-control bg-light"
-                value={userData?.dni || ""}
+                value={userData?.phoneCode || "54"}
                 disabled
+                title="Para cambiar tu número, contacta a la administración"
               />
             </div>
 
+            {/* 🔒 TELÉFONO - CÓD. ÁREA (BLOQUEADO) */}
+            <div className="col-md-4">
+              <label className="form-label fw-bold small text-muted">Cód. Área</label>
+              <input
+                type="text"
+                className="form-control bg-light"
+                value={userData?.phoneArea || ""}
+                disabled
+                title="Para cambiar tu número, contacta a la administración"
+              />
+            </div>
+
+            {/* 🔒 TELÉFONO - NÚMERO (BLOQUEADO) */}
+            <div className="col-md-5">
+              <label className="form-label fw-bold small text-muted">Teléfono</label>
+              <input
+                type="text"
+                className="form-control bg-light"
+                value={userData?.phoneNumber || ""}
+                disabled
+                title="Para cambiar tu número, contacta a la administración"
+              />
+            </div>
+
+            {/* DIRECCIÓN (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Dirección / Localidad *</label>
               <input
@@ -378,47 +409,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
-            <div className="col-md-3">
-              <label className="form-label fw-bold small text-muted">Cód. País</label>
-              <input
-                type="text"
-                name="phoneCode"
-                className="form-control"
-                value={formData.phoneCode || "54"}
-                onChange={handleInputChange}
-                required={isForced}
-                disabled={savingProfile}
-              />
-            </div>
-
-            <div className="col-md-4">
-              <label className="form-label fw-bold small text-muted">Cód. Área (sin 0) *</label>
-              <input
-                type="text"
-                name="phoneArea"
-                className="form-control"
-                placeholder="Ej: 11 o 376"
-                value={formData.phoneArea || ""}
-                onChange={handleInputChange}
-                required={isForced}
-                disabled={savingProfile}
-              />
-            </div>
-
-            <div className="col-md-5">
-              <label className="form-label fw-bold small text-muted">Número (sin 15) *</label>
-              <input
-                type="text"
-                name="phoneNumber"
-                className="form-control"
-                placeholder="Ej: 4567890"
-                value={formData.phoneNumber || ""}
-                onChange={handleInputChange}
-                required={isForced}
-                disabled={savingProfile}
-              />
-            </div>
-
+            {/* ESTADO CIVIL (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Estado Civil *</label>
               <select
@@ -436,6 +427,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               </select>
             </div>
 
+            {/* PROFESIÓN (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Profesión / Ocupación *</label>
               <input
@@ -450,6 +442,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
+            {/* IGLESIA Y PASTOR (EDITABLE) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Iglesia y Pastor *</label>
               <input
@@ -464,6 +457,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
+            {/* ROL MINISTERIAL (EDITABLE OPCIONAL) */}
             <div className="col-md-6">
               <label className="form-label fw-bold small text-muted">Rol Ministerial (opcional)</label>
               <input
@@ -477,6 +471,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
               />
             </div>
 
+            {/* MOTIVO DE INSCRIPCIÓN (EDITABLE) */}
             <div className="col-12">
               <label className="form-label fw-bold small text-muted">Motivo de Inscripción *</label>
               <textarea
@@ -520,7 +515,7 @@ const Perfil = ({ API_URL: propApiUrl, onProfileComplete }) => {
           </div>
         </form>
       ) : (
-        /* Vista de lectura cuando el perfil ya está completo */
+        /* Vista de lectura cuando el perfil está completo */
         <>
           <div className="d-flex justify-content-end mb-3">
             <button className="btn btn-outline-primary" onClick={() => setIsEditing(true)}>
