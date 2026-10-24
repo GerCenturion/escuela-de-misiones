@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Helper para prevenir bloqueos por navegación privada o Safari móvil
+const safeStorage = {
+  setItem: (key, value) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn("No se pudo escribir en localStorage:", e);
+    }
+  },
+  getItem: (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn("No se pudo leer de localStorage:", e);
+      return null;
+    }
+  },
+};
+
 const Login = () => {
   const [dni, setDni] = useState("");
   const [password, setPassword] = useState("");
@@ -8,40 +27,54 @@ const Login = () => {
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const [requiresVerification, setRequiresVerification] = useState(false);
   const navigate = useNavigate();
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // 🔥 Verificar si ya existe un token al montar el componente
+  // Redirigir según rol
+  const redirectByRole = (role) => {
+    if (role === "admin") {
+      navigate("/admin-dashboard");
+    } else if (role === "profesor") {
+      navigate("/professor-dashboard");
+    } else if (role === "alumno") {
+      navigate("/dashboard");
+    } else {
+      setError("Rol desconocido. Contacte al administrador.");
+    }
+  };
+
+  // Verificar si ya existe un token al montar el componente
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userRole = localStorage.getItem("role");
+    const token = safeStorage.getItem("token");
+    const userRole = safeStorage.getItem("role");
 
     if (token && userRole) {
-      if (userRole === "admin") {
-        navigate("/admin-dashboard");
-      } else if (userRole === "profesor") {
-        navigate("/professor-dashboard");
-      } else if (userRole === "alumno") {
-        navigate("/dashboard");
-      } else {
-        setError("Rol desconocido. Contacte al administrador.");
-      }
+      redirectByRole(userRole);
     }
   }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setStatus("");
+    setLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, password }),
+        body: JSON.stringify({ dni: dni.trim(), password }),
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Credenciales inválidas. Intente nuevamente.");
+        return;
+      }
 
       if (data.requiresVerification) {
         setRequiresVerification(true);
@@ -49,57 +82,55 @@ const Login = () => {
         return;
       }
 
-      // Guardar token y rol en localStorage para mantener la sesión
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
-
-      if (data.user.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (data.user.role === "profesor") {
-        navigate("/professor-dashboard");
-      } else if (data.user.role === "alumno") {
-        navigate("/dashboard");
+      if (data.token && data.user) {
+        safeStorage.setItem("token", data.token);
+        safeStorage.setItem("role", data.user.role);
+        redirectByRole(data.user.role);
       } else {
-        setError("Rol desconocido. Contacte al administrador.");
+        setError("Respuesta inesperada del servidor. Intente más tarde.");
       }
-    } catch (error) {
-      setError("Credenciales inválidas. Intente nuevamente.");
+    } catch (err) {
+      console.error("Error en login:", err);
+      setError("Error al conectar con el servidor. Verifique su conexión.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVerifyCode = async () => {
-    try {
-      setError("");
-      setStatus("Verificando código...");
+    setError("");
+    setStatus("Verificando código...");
+    setLoading(true);
 
+    try {
       const response = await fetch(`${API_URL}/login/verificar-codigo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni, verificationCode }),
+        body: JSON.stringify({ dni: dni.trim(), verificationCode: verificationCode.trim() }),
       });
 
       const data = await response.json();
       setVerificationCode("");
 
       if (!response.ok) {
-        setStatus(data.message);
+        setStatus("");
+        setError(data.message || "Código inválido o expirado.");
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.user.role);
-
-      if (data.user.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (data.user.role === "profesor") {
-        navigate("/professor-dashboard");
-      } else if (data.user.role === "alumno") {
-        navigate("/dashboard");
+      if (data.token && data.user) {
+        safeStorage.setItem("token", data.token);
+        safeStorage.setItem("role", data.user.role);
+        redirectByRole(data.user.role);
       } else {
-        setError("Rol desconocido. Contacte al administrador.");
+        setError("Error al iniciar sesión con el código.");
       }
-    } catch (error) {
-      setError("Error al verificar código.");
+    } catch (err) {
+      console.error("Error al verificar código:", err);
+      setStatus("");
+      setError("Error de comunicación al verificar el código.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,6 +153,7 @@ const Login = () => {
                 onChange={(e) => setDni(e.target.value)}
                 required
                 pattern="\d*"
+                disabled={loading}
               />
             </div>
             <div className="mb-3 position-relative">
@@ -132,23 +164,38 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
                 className="position-absolute top-50 end-0 translate-middle-y me-3"
-                style={{ cursor: "pointer" }}
+                style={{ cursor: "pointer", marginTop: "12px" }}
               >
                 {showPassword ? "🙈" : "👁️"}
               </span>
             </div>
+
             {error && (
-              <div className="alert alert-danger text-center">{error}</div>
+              <div className="alert alert-danger text-center p-2 mb-3">{error}</div>
             )}
+
             <button
               type="submit"
-              className="btn btn-primary w-100"
+              className="btn btn-primary w-100 d-flex justify-content-center align-items-center"
+              disabled={loading}
             >
-              Iniciar Sesión
+              {loading ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Iniciando sesión...
+                </>
+              ) : (
+                "Iniciar Sesión"
+              )}
             </button>
 
             <div className="text-center mt-3">
@@ -156,6 +203,7 @@ const Login = () => {
                 type="button"
                 className="btn btn-link text-decoration-none"
                 onClick={() => navigate("/recuperar")}
+                disabled={loading}
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -175,19 +223,37 @@ const Login = () => {
                 onChange={(e) => setVerificationCode(e.target.value)}
                 required
                 pattern="\d*"
+                disabled={loading}
               />
             </div>
+
+            {error && (
+              <div className="alert alert-danger text-center p-2 mb-3">{error}</div>
+            )}
+
             <button
               onClick={handleVerifyCode}
-              className="btn btn-success w-100"
+              className="btn btn-success w-100 d-flex justify-content-center align-items-center"
+              disabled={loading}
             >
-              Verificar Código
+              {loading ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  Verificando...
+                </>
+              ) : (
+                "Verificar Código"
+              )}
             </button>
           </div>
         )}
 
         {status && (
-          <div className="alert alert-info text-center mt-3">{status}</div>
+          <div className="alert alert-info text-center mt-3 p-2">{status}</div>
         )}
       </div>
     </div>
