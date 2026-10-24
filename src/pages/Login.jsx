@@ -106,7 +106,10 @@ const Login = () => {
       const response = await fetch(`${API_URL}/login/verificar-codigo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dni: dni.trim(), verificationCode: verificationCode.trim() }),
+        body: JSON.stringify({
+          dni: dni.trim(),
+          verificationCode: verificationCode.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -148,12 +151,13 @@ const Login = () => {
               <label className="form-label">DNI:</label>
               <input
                 type="text"
+                inputMode="numeric"
                 className="form-control"
                 value={dni}
-                onChange={(e) => setDni(e.target.value)}
+                onChange={(e) => setDni(e.target.value.trim())}
                 required
-                pattern="\d*"
                 disabled={loading}
+                placeholder="Ingresa tu DNI"
               />
             </div>
             <div className="mb-3 position-relative">
@@ -176,7 +180,9 @@ const Login = () => {
             </div>
 
             {error && (
-              <div className="alert alert-danger text-center p-2 mb-3">{error}</div>
+              <div className="alert alert-danger text-center p-2 mb-3">
+                {error}
+              </div>
             )}
 
             <button
@@ -218,17 +224,20 @@ const Login = () => {
               <label className="form-label">Código de Verificación:</label>
               <input
                 type="text"
+                inputMode="numeric"
                 className="form-control"
                 value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
+                onChange={(e) => setVerificationCode(e.target.value.trim())}
                 required
-                pattern="\d*"
                 disabled={loading}
+                placeholder="Código recibido"
               />
             </div>
 
             {error && (
-              <div className="alert alert-danger text-center p-2 mb-3">{error}</div>
+              <div className="alert alert-danger text-center p-2 mb-3">
+                {error}
+              </div>
             )}
 
             <button
