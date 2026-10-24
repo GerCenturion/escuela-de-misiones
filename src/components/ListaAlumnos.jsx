@@ -1,21 +1,70 @@
 import React, { useState } from "react";
 
-const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
+const ListaAlumnos = ({ materia, gestionarInscripcion, error, onAlumnoEliminado }) => {
   const [filtro, setFiltro] = useState("");
-  const [mostrarLista, setMostrarLista] = useState(false); // Controla si se despliega la lista
+  const [mostrarLista, setMostrarLista] = useState(false);
+  const [eliminandoId, setEliminandoId] = useState(null);
 
-  // 🔥 CORRECCIÓN: Protección contra nulos
-  // Antes: materia.students.filter(...) fallaba si un student era null.
-  // Ahora: Verificamos que 'inscripcion.student' exista antes de filtrar.
+  // Normalizamos API_URL para que si ya termina en /api no lo duplique
+  const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const baseUrl = rawApiUrl.endsWith("/api")
+    ? rawApiUrl
+    : `${rawApiUrl}/api`;
+
   const listaSegura = materia?.students || [];
 
   const alumnosFiltrados = listaSegura.filter((inscripcion) => {
-    // 1. Si el usuario fue eliminado de la DB, 'inscripcion.student' es null. Lo saltamos.
     if (!inscripcion.student) return false;
-
-    // 2. Si existe, aplicamos tu filtro original
     return inscripcion.student.name.toLowerCase().includes(filtro.toLowerCase());
   });
+
+  const handleEliminarAlumno = async (alumnoId, alumnoNombre) => {
+    const confirmacion = window.confirm(
+      `¿Deseas eliminar a "${alumnoNombre || "este alumno"}" de la materia? Se borrará su inscripción o solicitud independientemente de su estado.`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      setEliminandoId(alumnoId);
+      const token = localStorage.getItem("token");
+
+      // Construcción exacta: baseUrl ya asegura un único "/api"
+      const response = await fetch(
+        `${baseUrl}/materias/${materia._id}/estudiante/${alumnoId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        let errorMsg = "Error al eliminar alumno";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch {
+          errorMsg = `Error HTTP ${response.status}: Ruta no encontrada o error en backend`;
+        }
+        throw new Error(errorMsg);
+      }
+
+      alert("✅ Solicitud/Alumno eliminado con éxito.");
+
+      if (onAlumnoEliminado) {
+        onAlumnoEliminado(alumnoId);
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("❌ Error al eliminar alumno:", err);
+      alert(err.message || "Hubo un error al eliminar.");
+    } finally {
+      setEliminandoId(null);
+    }
+  };
 
   return (
     <div className="mt-4">
@@ -51,11 +100,10 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
                 className="list-group-item d-flex justify-content-between align-items-center"
               >
                 <div>
-                  <p>
+                  <p className="mb-1">
                     <strong>{inscripcion.student.name}</strong>
-                    {/* - {inscripcion.student.dni} */}
                   </p>
-                  <p>
+                  <p className="mb-0">
                     Estado actual:{" "}
                     <span
                       className={`badge ${
@@ -70,7 +118,8 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
                     </span>
                   </p>
                 </div>
-                <div>
+
+                <div className="d-flex align-items-center gap-2">
                   <select
                     className="form-select form-select-sm"
                     value={inscripcion.status || ""}
@@ -82,6 +131,22 @@ const ListaAlumnos = ({ materia, gestionarInscripcion, error }) => {
                     <option value="Aceptado">Aceptado</option>
                     <option value="Rechazado">Rechazado</option>
                   </select>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center"
+                    style={{ width: "32px", height: "32px", borderRadius: "50%", padding: 0 }}
+                    title="Eliminar de la materia"
+                    disabled={eliminandoId === inscripcion.student._id}
+                    onClick={() =>
+                      handleEliminarAlumno(
+                        inscripcion.student._id,
+                        inscripcion.student.name
+                      )
+                    }
+                  >
+                    {eliminandoId === inscripcion.student._id ? "..." : "✕"}
+                  </button>
                 </div>
               </li>
             ))
