@@ -6,6 +6,72 @@ import LogoutButton from "../components/LogoutButton";
 import Spinner from "../components/Spinner";
 import "../Dashboard.css";
 
+// Helper para detectar campos vacíos, nulos, guiones o placeholders ("No especificada", etc.)
+const isCampoIncompleto = (valor) => {
+  if (valor === undefined || valor === null) return true;
+  const limpio = String(valor).trim().toLowerCase();
+
+  const valoresInvalidos = [
+    "",
+    "-",
+    "--",
+    "no especificada",
+    "no especificado",
+    "no asignado",
+    "sin asignar",
+    "null",
+    "undefined",
+  ];
+
+  return valoresInvalidos.includes(limpio);
+};
+
+// 📌 Validador de correo: invalida correos por defecto (@sinemail.com, @noemail.com)
+const isEmailInvalido = (email) => {
+  if (!email) return true;
+  const limpio = String(email).trim().toLowerCase();
+  
+  if (
+    limpio === "" ||
+    limpio.includes("@sinemail.com") ||
+    limpio.includes("@noemail.com") ||
+    !limpio.includes("@") ||
+    !limpio.includes(".")
+  ) {
+    return true;
+  }
+  return false;
+};
+
+// Comprobar si faltan datos esenciales del alumno (incluyendo email real)
+const tienePerfilIncompleto = (user) => {
+  if (!user) return false;
+  // Solo se exige a los alumnos. Administradores y profesores quedan exentos.
+  if (user.role === "admin" || user.role === "profesor") {
+    return false;
+  }
+
+  // 1. Validar correo electrónico real
+  if (isEmailInvalido(user.email)) {
+    return true;
+  }
+
+  // 2. Validar resto de campos obligatorios
+  const camposObligatorios = [
+    user.name,
+    user.birthdate,
+    user.address,
+    user.phoneArea,
+    user.phoneNumber,
+    user.civilStatus,
+    user.profession,
+    user.church,
+    user.reason,
+  ];
+
+  return camposObligatorios.some(isCampoIncompleto);
+};
+
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("materias");
   const [userData, setUserData] = useState(null);
@@ -17,33 +83,35 @@ const Dashboard = () => {
   const [loadingInscripcion, setLoadingInscripcion] = useState(false);
   const [error, setError] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
-  const [alumnoId, setAlumnoId] = useState(null); // ✅ Definido como estado
+  const [alumnoId, setAlumnoId] = useState(null);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const [showSpinner, setShowSpinner] = useState(true);
   const [loadingButton, setLoadingButton] = useState(false);
 
+  // 🔒 Estado de bloqueo obligatorio de perfil
+  const [isProfileLocked, setIsProfileLocked] = useState(false);
+
   const handleButtonClick = async (materiaId) => {
-    if (loadingButton) return; // Evita múltiples clics mientras está en proceso
+    if (loadingButton) return;
+    setLoadingButton(true);
 
-    setLoadingButton(true); // Deshabilita el botón
-
-    await handleInscripcion(materiaId); // Llama a la función original
+    await handleInscripcion(materiaId);
 
     setTimeout(() => {
-      setLoadingButton(false); // Habilita el botón después de 4 segundos
+      setLoadingButton(false);
     }, 4000);
   };
 
   useEffect(() => {
     if (!loadingMaterias) {
-      setShowSpinner(true); // Mantiene el spinner visible inicialmente
+      setShowSpinner(true);
       const timer = setTimeout(() => {
-        setShowSpinner(false); // Oculta el spinner después de 5 segundos
+        setShowSpinner(false);
       }, 5000);
 
-      return () => clearTimeout(timer); // Limpia el timeout si el componente se desmonta
+      return () => clearTimeout(timer);
     }
   }, [loadingMaterias]);
 
@@ -67,10 +135,20 @@ const Dashboard = () => {
 
         const data = await response.json();
         setUserData(data);
-        setLoading(false);
         setAlumnoId(data._id);
+
+        // 🔒 Verificar si el alumno tiene perfil incompleto o email por defecto
+        if (tienePerfilIncompleto(data)) {
+          setIsProfileLocked(true);
+          setActiveSection("profile"); // Forzar apertura de la sección de perfil
+        } else {
+          setIsProfileLocked(false);
+        }
+
+        setLoading(false);
       } catch (error) {
         console.error("Error al cargar los datos del usuario:", error);
+        setLoading(false);
       }
     };
 
@@ -90,7 +168,6 @@ const Dashboard = () => {
           data.filter((materia) => materia.isEnrollmentOpen)
         );
 
-        // Verificar estado de inscripción para cada materia
         data.forEach((materia) => fetchInscriptionStatus(materia._id));
       } catch (error) {
         console.error("Error al cargar las materias disponibles:", error);
@@ -123,14 +200,14 @@ const Dashboard = () => {
         console.error("Error al obtener estado de inscripción:", error);
       } finally {
         setTimeout(() => {
-          setLoadingInscripcion(false); // ✅ Ocultar Spinner después de 5 segundos
+          setLoadingInscripcion(false);
         }, 5000);
       }
     };
 
     fetchUserData();
     fetchAvailableMaterias();
-  }, [token, navigate]);
+  }, [token, navigate, API_URL]);
 
   const handleInscripcion = async (materiaId) => {
     try {
@@ -152,7 +229,6 @@ const Dashboard = () => {
       const data = await response.json();
       alert(data.message);
 
-      // Actualizar estado de inscripción en el frontend
       setInscriptionStatus((prev) => ({
         ...prev,
         [materiaId]: "Pendiente",
@@ -163,7 +239,6 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ Cierra el menú si se hace clic fuera de él
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
@@ -177,14 +252,27 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ Cierra el menú al hacer clic en una opción
   const handleSectionChange = (section) => {
+    if (isProfileLocked && section !== "profile") {
+      alert("Debes completar todos tus datos de perfil (incluyendo un email real) para acceder a las materias y a la libreta.");
+      return;
+    }
+
     setActiveSection(section);
     if (window.innerWidth <= 768) {
       setIsSidebarOpen(false);
     }
   };
+
+  // Callback ejecutado cuando el usuario guarda su perfil con éxito en Perfil.jsx
+  const handleProfileUpdated = (usuarioActualizado) => {
+    setUserData(usuarioActualizado);
+    setIsProfileLocked(false);
+    setActiveSection("materias");
+  };
+
   if (loading) return <Spinner />;
+
   return (
     <div className="dashboard-container">
       <button
@@ -194,32 +282,30 @@ const Dashboard = () => {
         ☰
       </button>
 
-      <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
+      <aside ref={sidebarRef} className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
         <h2 className="sidebar-title">Escuela de Misiones</h2>
         <nav className="sidebar-nav">
           <ul>
-            {/* <li>
-              <button
-                className={activeSection === "home" ? "active" : ""}
-                onClick={() => handleSectionChange("home")}
-              >
-                Inicio
-              </button>
-            </li> */}
             <li>
               <button
                 className={activeSection === "materias" ? "active" : ""}
                 onClick={() => handleSectionChange("materias")}
+                disabled={isProfileLocked}
+                style={isProfileLocked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                title={isProfileLocked ? "Completa tu perfil para acceder" : ""}
               >
-                Materias
+                Materias {isProfileLocked && "🔒"}
               </button>
             </li>
             <li>
               <button
                 className={activeSection === "libreta" ? "active" : ""}
                 onClick={() => handleSectionChange("libreta")}
+                disabled={isProfileLocked}
+                style={isProfileLocked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                title={isProfileLocked ? "Completa tu perfil para acceder" : ""}
               >
-                Libreta
+                Libreta {isProfileLocked && "🔒"}
               </button>
             </li>
             <li>
@@ -227,7 +313,7 @@ const Dashboard = () => {
                 className={activeSection === "profile" ? "active" : ""}
                 onClick={() => handleSectionChange("profile")}
               >
-                Perfil
+                Perfil {isProfileLocked && "⚠️ (Requerido)"}
               </button>
             </li>
             <LogoutButton />
@@ -236,18 +322,12 @@ const Dashboard = () => {
       </aside>
 
       <main className="main-content">
-        {/* {activeSection === "home" && (
-          <div className="home-section">
-            <h1>Bienvenido {userData ? userData.name : "Cargando..."}</h1>
-            <div className="image-container">
-              <img
-                src="/fotos/mes.jpg"
-                alt="Imagen de mes"
-                className="responsive-image"
-              />
-            </div>
+        {/* Banner de advertencia superior mientras esté bloqueado */}
+        {isProfileLocked && activeSection === "profile" && (
+          <div className="alert alert-warning mb-4 shadow-sm text-center" style={{ borderRadius: "8px" }}>
+            <strong>Atención:</strong> Tienes datos pendientes, no especificados o un correo temporal en tu perfil. Completa todos los campos obligatorios para desbloquear el campus.
           </div>
-        )} */}
+        )}
 
         {activeSection === "libreta" && (
           <LibretaIndividual
@@ -279,7 +359,6 @@ const Dashboard = () => {
                         {materia.professor?.name || "Sin profesor asignado"}
                       </p>
 
-                      {/* Estado de inscripción con colores */}
                       <div className="inscription-status">
                         {estadoInscripcion === "Pendiente" && (
                           <span className="badge badge-warning">Pendiente</span>
@@ -297,7 +376,6 @@ const Dashboard = () => {
                         )}
                       </div>
 
-                      {/* Redirigir al componente correcto según la inscripción */}
                       <div className="materia-action">
                         <Link
                           to={
@@ -312,7 +390,6 @@ const Dashboard = () => {
                         </Link>
                       </div>
 
-                      {/* Botón de inscripción si no está Aceptado */}
                       <div className="materia-action">
                         {estadoInscripcion === "Aceptado" ? (
                           <span className="badge bg-success text-white">
@@ -341,7 +418,12 @@ const Dashboard = () => {
         )}
 
         {activeSection === "profile" && (
-          <Perfil userData={userData} API_URL={API_URL} token={token} />
+          <Perfil
+            userData={userData}
+            API_URL={API_URL}
+            token={token}
+            onProfileComplete={handleProfileUpdated}
+          />
         )}
       </main>
     </div>

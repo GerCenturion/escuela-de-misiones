@@ -33,7 +33,7 @@ const Login = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // Redirigir según rol
+  // Redirigir según el rol del usuario
   const redirectByRole = (role) => {
     if (role === "admin") {
       navigate("/admin-dashboard");
@@ -46,7 +46,7 @@ const Login = () => {
     }
   };
 
-  // Verificar si ya existe un token al montar el componente
+  // Verificar si ya existe sesión activa al montar el componente
   useEffect(() => {
     const token = safeStorage.getItem("token");
     const userRole = safeStorage.getItem("role");
@@ -85,6 +85,7 @@ const Login = () => {
       if (data.token && data.user) {
         safeStorage.setItem("token", data.token);
         safeStorage.setItem("role", data.user.role);
+        // Redirige directo a su Dashboard correspondiente
         redirectByRole(data.user.role);
       } else {
         setError("Respuesta inesperada del servidor. Intente más tarde.");
@@ -124,6 +125,7 @@ const Login = () => {
       if (data.token && data.user) {
         safeStorage.setItem("token", data.token);
         safeStorage.setItem("role", data.user.role);
+        // Redirige directo a su Dashboard correspondiente
         redirectByRole(data.user.role);
       } else {
         setError("Error al iniciar sesión con el código.");

@@ -29,11 +29,13 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import CrearUsuario from "./pages/CrearUsuario";
 import LibretaIndividual from "./components/LibretaIndividual";
 import AgregarLibreta from "./pages/AgregarLibreta";
+import Perfil from "./components/Perfil"; // 👈 Importamos Perfil (ajusta la ruta si está en ./pages/Perfil)
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const token = localStorage.getItem("token");
 
 const App = () => {
+  const token = localStorage.getItem("token");
+
   return (
     <Router>
       <div className="app">
@@ -99,6 +101,19 @@ const App = () => {
               </>
             }
           />
+
+          {/* 🔒 Ruta de Perfil (Protegida) */}
+          <Route
+            path="/perfil"
+            element={
+              <PrivateRoute>
+                <Header />
+                <Perfil API_URL={API_URL} token={token} />
+                <Footer />
+              </PrivateRoute>
+            }
+          />
+
           {/* Rutas sin Header ni Footer */}
           <Route
             path="/dashboard"
