@@ -11,8 +11,11 @@ const MateriaDetalle = () => {
   const [materia, setMateria] = useState(null);
   const [examenes, setExamenes] = useState([]);
   const [error, setError] = useState("");
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const token = localStorage.getItem("token");
+
+  // Normalizar API_URL para que no duplique /api
+  const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_URL = rawApiUrl.replace(/\/+$/, "");
+
   const [usuarioId, setUsuarioId] = useState(
     localStorage.getItem("usuarioId") || null
   );
@@ -20,20 +23,34 @@ const MateriaDetalle = () => {
   useEffect(() => {
     if (!usuarioId && userId) {
       setUsuarioId(userId);
-      localStorage.setItem("usuarioId", userId); // 🔥 Guarda el ID en localStorage para persistencia
+      localStorage.setItem("usuarioId", userId);
     }
   }, [userId, usuarioId]);
 
   useEffect(() => {
     const fetchMateria = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        console.log(
-          `📡 Cargando materia desde ${API_URL}/materias/completo/${id}`
-        );
-        const response = await fetch(`${API_URL}/materias/completo/${id}`, {
+        // Consultamos la ruta estándar por ID (/materias/:id)
+        console.log(`📡 Cargando materia desde ${API_URL}/materias/${id}`);
+        const response = await fetch(`${API_URL}/materias/${id}`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
+
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Error al obtener la materia: ${response.status}`);
@@ -49,11 +66,20 @@ const MateriaDetalle = () => {
       }
     };
 
-    fetchMateria();
-  }, [id, token, usuarioId]);
+    if (id) {
+      fetchMateria();
+    }
+  }, [id, navigate, API_URL]);
 
   if (error) {
-    return <div className="alert alert-danger">{error}</div>;
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-danger">{error}</div>
+        <button className="btn btn-secondary" onClick={() => navigate("/dashboard")}>
+          Volver al Dashboard
+        </button>
+      </div>
+    );
   }
 
   if (!materia) {
@@ -75,7 +101,7 @@ const MateriaDetalle = () => {
 
       {/* Archivos Subidos */}
       <h2 className="mt-4">Archivos</h2>
-      {materia.files.length > 0 ? (
+      {materia.files && materia.files.length > 0 ? (
         <ul className="list-group">
           {materia.files.map((file, index) => (
             <li
@@ -100,13 +126,10 @@ const MateriaDetalle = () => {
 
       {/* Videos Asociados */}
       <h2 className="mt-4">Videos</h2>
-      {materia.videos.length > 0 ? (
+      {materia.videos && materia.videos.length > 0 ? (
         <div className="row">
           {materia.videos.map((video, index) => (
-            <div
-              key={index}
-              className="col-md-6"
-            >
+            <div key={index} className="col-md-6 mb-3">
               <VideoPlayer video={video} />
             </div>
           ))}
@@ -115,12 +138,12 @@ const MateriaDetalle = () => {
         <p>No hay videos disponibles.</p>
       )}
 
-      {/* Exámenes Disponibles - Componente separado */}
+      {/* Exámenes Disponibles */}
       <ListaExamenes
         examenes={examenes}
         usuarioId={usuarioId}
         API_URL={API_URL}
-        token={token}
+        token={localStorage.getItem("token")}
       />
     </div>
   );
