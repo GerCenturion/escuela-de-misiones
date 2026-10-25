@@ -9,16 +9,33 @@ const Oyente = () => {
   const [materia, setMateria] = useState(null);
   const [error, setError] = useState("");
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const token = localStorage.getItem("token");
+  // Normalizar API_URL
+  const rawApiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const API_URL = rawApiUrl.replace(/\/+$/, "");
 
   useEffect(() => {
     const fetchMateria = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        const response = await fetch(`${API_URL}/materias/completo/${id}`, {
+        console.log(`📡 Cargando materia para oyente desde ${API_URL}/materias/${id}`);
+        const response = await fetch(`${API_URL}/materias/${id}`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
+
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Error al obtener la materia: ${response.status}`);
@@ -27,16 +44,28 @@ const Oyente = () => {
         const data = await response.json();
         setMateria(data);
       } catch (error) {
-        console.error("❌ Error en fetchMateria:", error);
+        console.error("❌ Error en fetchMateria (Oyente):", error);
         setError(error.message);
       }
     };
 
-    fetchMateria();
-  }, [id, token]);
+    if (id) {
+      fetchMateria();
+    }
+  }, [id, navigate, API_URL]);
 
   if (error) {
-    return <div className="alert alert-danger">{error}</div>;
+    return (
+      <div className="container mt-4">
+        <div className="alert alert-danger">{error}</div>
+        <button
+          className="btn btn-secondary"
+          onClick={() => navigate("/dashboard")}
+        >
+          Volver al Dashboard
+        </button>
+      </div>
+    );
   }
 
   if (!materia) {
@@ -58,7 +87,7 @@ const Oyente = () => {
 
       {/* Archivos Subidos */}
       <h2 className="mt-4">Archivos</h2>
-      {materia.files.length > 0 ? (
+      {materia.files && materia.files.length > 0 ? (
         <ul className="list-group">
           {materia.files.map((file, index) => (
             <li
@@ -83,13 +112,10 @@ const Oyente = () => {
 
       {/* Videos Asociados */}
       <h2 className="mt-4">Videos</h2>
-      {materia.videos.length > 0 ? (
+      {materia.videos && materia.videos.length > 0 ? (
         <div className="row">
           {materia.videos.map((video, index) => (
-            <div
-              key={index}
-              className="col-md-6"
-            >
+            <div key={index} className="col-md-6 mb-3">
               <VideoPlayer video={video} />
             </div>
           ))}
